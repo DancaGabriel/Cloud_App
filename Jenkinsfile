@@ -10,6 +10,14 @@ pipeline {
                 sh 'ls -la'
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                echo "Construire imagine Docker..."
+                sh 'docker build -t flask-app:build-${BUILD_NUMBER} .'
+                echo "Imagine Docker construită cu succes."
+            }
+        }
         // Aici vom adăuga mai târziu etape pentru:
         // - Instalare dependențe (pip install)
         // - Testare (dacă e cazul)
