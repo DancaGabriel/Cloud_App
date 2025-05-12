@@ -18,6 +18,17 @@ pipeline {
             }
         }
 
+        stage('Run Tests') {
+            steps {
+                echo "Pregătire mediu și instalare dependențe pentru testare..."
+                sh 'pip install -r requirements.txt' 
+                
+                echo "Rulare teste automate..."
+                sh 'pytest' 
+                echo "Testele au trecut cu succes."
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 echo "Construire imagine Docker..."
