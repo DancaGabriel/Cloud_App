@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/Users/gdanca/Desktop/Final Cloud Project/.venv/bin/python3" "$0" "$@"
+'''exec' "/Users/gdanca/Desktop/Final Cloud Project/.venv/bin/python3.11" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re
