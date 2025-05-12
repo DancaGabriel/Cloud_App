@@ -2,9 +2,10 @@ pipeline {
     agent any
 
     environment {
-        AWS_DEFAULT_REGION = 'eu-central-1' 
-        ECR_REPOSITORY_NAME = 'cloud-app'    
+        AWS_DEFAULT_REGION = 'eu-central-1'   
+        ECR_REPOSITORY_NAME = 'cloud-app'       
         IMAGE_NAME = 'flask-app'
+        APP_RUNNER_SERVICE_ARN = 'arn:aws:apprunner:eu-central-1:899420340253:service/cloud-apprunner/ff5611be29164a709717fe8f114ba080'
     }
 
     stages {
@@ -63,10 +64,19 @@ pipeline {
                         sh "docker logout ${ecrRegistry}"
 
                         echo "Ștergere imagine Docker locală..."
-                    
                         sh script: "docker rmi -f ${ecrImageTag} ${ecrImageLatestTag} ${localImageTag}", returnStatus: true
                         echo "Curățare imagine locală finalizată (sau încercată)."
                     }
+                }
+            }
+        }
+
+        stage('Deploy to App Runner') {
+            steps {
+                script {
+                    echo "Pornire deployment pentru serviciul App Runner: ${env.APP_RUNNER_SERVICE_ARN}"
+                    sh "aws apprunner start-deployment --service-arn ${env.APP_RUNNER_SERVICE_ARN} --region ${env.AWS_DEFAULT_REGION}"
+                    echo "Deployment App Runner inițiat. Verifică progresul în consola AWS App Runner."
                 }
             }
         }
