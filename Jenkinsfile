@@ -19,16 +19,25 @@ pipeline {
         }
 
         stage('Run Tests') {
-            environment {
-                    EXCHANGE_RATE_API_KEY = "dummy-key-pentru-jenkins-test"
+            agent { 
+                docker {
+                    image 'python:3.13-slim'
+            
                 }
+            }
+            environment {
+                EXCHANGE_RATE_API_KEY = "dummy-key-pentru-jenkins-test"
+            }
+
             steps {
-                echo "Pregătire mediu și instalare dependențe pentru testare..."
+                echo "Pregătire mediu și instalare dependențe pentru testare (în containerul python:3.13-slim)..."
+                sh 'python --version'
+                sh 'pip --version'   
                 sh 'pip install -r requirements.txt' 
                 
-                echo "INFO Jenkins: Variabila de mediu EXCHANGE_RATE_API_KEY este '${env.EXCHANGE_RATE_API_KEY}'"
+                echo "INFO Jenkins (în containerul python:3.13-slim): Variabila de mediu EXCHANGE_RATE_API_KEY este '${env.EXCHANGE_RATE_API_KEY}'"
                 sh 'pytest -v' 
-                echo "Testele au trecut cu succes."
+                echo "Testele au trecut cu succes (în containerul python:3.13-slim)."
             }
         }
 
