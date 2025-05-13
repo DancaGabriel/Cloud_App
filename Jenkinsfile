@@ -22,7 +22,7 @@ pipeline {
             agent { 
                 docker {
                     image 'python:3.13-slim'
-            
+                    args '-u root'
                 }
             }
             environment {
