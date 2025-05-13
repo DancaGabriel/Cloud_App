@@ -37,21 +37,17 @@ def get_db_connection():
         return None
 
 def parse_api_datetime_to_db_format(api_datetime_str):
-    # Încearcă să parseze formatul RFC 2822 (cu %z care așteaptă +HHMM sau -HHMM)
     try:
         dt_object_aware = datetime.strptime(api_datetime_str, '%a, %d %b %Y %H:%M:%S %z')
         dt_object_utc_naive = dt_object_aware.astimezone(timezone.utc).replace(tzinfo=None)
         return dt_object_utc_naive
     except ValueError as e:
-        # print(f"Info: Parsarea datei API '{api_datetime_str}' cu formatul standard %z a eșuat inițial: {e}")
-        # Fallback pentru formate unde %z ar putea avea ':' (ex: +00:00) sau lipsește complet
+      
         try:
             cleaned_str = api_datetime_str
-            # Standardizează offset-ul: elimină ':' dacă există (ex: +00:00 -> +0000)
             if len(cleaned_str) > 5 and cleaned_str[-3] == ':':
                 cleaned_str = cleaned_str[:-3] + cleaned_str[-2:]
             
-            # Elimină sufixe textuale de fus orar și adaugă offset UTC implicit dacă lipsește un offset numeric
             parts = cleaned_str.split()
             potential_offset_part = parts[-1]
             is_numeric_offset = False
@@ -61,10 +57,10 @@ def parse_api_datetime_to_db_format(api_datetime_str):
             if potential_offset_part.isalpha() and potential_offset_part.upper() in ["GMT", "UTC", "Z"]:
                 datetime_part_str = " ".join(parts[:-1]) + " +0000"
             elif is_numeric_offset:
-                datetime_part_str = cleaned_str # Deja are formatul +HHMM
-            else: # Nu are un offset numeric recunoscut sau un sufix textual clar
-                datetime_part_str_base = " ".join(parts[:5]) # Presupunem formatul 'Zi, ZZ Luna Anul HH:MM:SS'
-                datetime_part_str = datetime_part_str_base + " +0000" # Presupunem UTC
+                datetime_part_str = cleaned_str
+            else:
+                datetime_part_str_base = " ".join(parts[:5])
+                datetime_part_str = datetime_part_str_base + " +0000" 
 
             dt_object_aware = datetime.strptime(datetime_part_str, '%a, %d %b %Y %H:%M:%S %z')
             dt_object_utc_naive = dt_object_aware.astimezone(timezone.utc).replace(tzinfo=None)
@@ -129,9 +125,8 @@ def insert_rates_into_db(base_code, rates_dict, effective_date_obj, source_last_
     
     source_datetime_db_format = parse_api_datetime_to_db_format(source_last_update_utc_str)
     if not source_datetime_db_format:
-        # Mesajul de eroare este deja printat în parse_api_datetime_to_db_format
         if conn and conn.is_connected(): conn.close()
-        return False # Critical: cannot proceed if timestamp cannot be parsed
+        return False 
         
     insert_query = """
         INSERT IGNORE INTO daily_exchange_rates 

@@ -11,7 +11,7 @@ body {
     color: #3a3b3c;
     line-height: 1.65;
     font-weight: 400;
-    padding-top: 0; /* Eliminăm padding-ul de sus, meniul nu mai împinge conținutul direct */
+    padding-top: 0;
 }
 
 .page-content-wrapper {
@@ -20,13 +20,12 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 20px; 
-    margin-top: 70px; /* Spațiu pentru meniul fix */
+    margin-top: 70px; 
 }
 
-/* Hamburger Menu Button */
 .hamburger-menu-button {
     position: fixed;
-    top: 15px; /* Ajustat puțin mai sus */
+    top: 15px; 
     left: 15px;
     z-index: 1002; 
     background-color: #ffffff; /* Fundal alb pentru icon */
@@ -99,13 +98,11 @@ body {
     color: #ffffff;
 }
 
-/* Eliminăm border-top specific de la primul element, nu mai e necesar cu noul padding */
 .mobile-dropdown-menu li:first-child a {
     border-top: none; 
 }
 
 
-/* Page Header (sub meniu, dacă există) */
 .page-header {
     text-align: center;
     margin-bottom: 30px;
@@ -113,12 +110,8 @@ body {
     max-width: 1100px;
     margin-left: auto;
     margin-right: auto;
-    /* margin-top este acum gestionat de padding-ul .page-content-wrapper */
 }
 
-/* Restul CSS-ului rămâne la fel ca în versiunea anterioară */
-/* (stilurile pentru .page-header h1, .subtitle, .base-currency-selector-section, .content-wrapper, etc.) */
-/* Asigură-te că ai tot CSS-ul de la răspunsul anterior de aici în jos */
 .page-header h1 {
     font-size: 2.4em;
     color: #2c3e50;
