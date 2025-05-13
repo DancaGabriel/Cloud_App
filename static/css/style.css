@@ -1,144 +1,289 @@
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Font modern */
-    background-color: #f4f7f6; /* Fundal deschis, neutru */
-    color: #333; /* Culoare text principală */
-    display: flex; /* Folosim flexbox pentru centrare */
-    justify-content: center;
-    align-items: center;
-    flex-direction: column; /* Aliniază elementele pe verticală */
-    min-height: 100vh; /* Asigură că body ocupă cel puțin înălțimea ecranului */
+/* General Resets and Base Styles */
+* {
+    box-sizing: border-box;
     margin: 0;
-    padding: 20px; /* Adaugă padding în jurul conținutului */
-    box-sizing: border-box; /* Include padding și border în dimensiunile elementului */
+    padding: 0;
 }
 
-h1 {
-    color: #0056b3; /* Albastru închis, profesional */
+body {
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #eef1f5; /* Fundal foarte deschis, neutru */
+    color: #3a3b3c; /* Culoare text principală, mai soft */
+    line-height: 1.65;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 25px;
+    font-weight: 400;
+}
+
+.page-header {
     text-align: center;
-    border-bottom: 3px solid #0056b3;
+    margin-bottom: 40px;
+    width: 100%;
+    max-width: 1100px; 
+}
+
+.page-header h1 {
+    font-size: 2.6em; /* Puțin mai mare */
+    color: #2c3e50; /* Albastru închis elegant */
+    margin-bottom: 8px;
+    font-weight: 700; /* Mai bold */
+    letter-spacing: -0.5px;
+}
+
+.page-header .subtitle {
+    font-size: 1.15em;
+    color: #525f7f; /* Gri-albăstrui */
+    font-weight: 300;
+}
+
+.content-wrapper {
+    display: flex;
+    flex-direction: column; 
+    gap: 30px; 
+    width: 100%;
+    max-width: 1200px; 
+    margin-bottom: 40px;
+}
+
+.rate-section.card { /* Aplicăm stilul de card secțiunilor */
+    background-color: #ffffff;
+    padding: 30px; 
+    border-radius: 10px; 
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07); /* Umbră mai subtilă */
+    flex-basis: 0; 
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rate-section.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.rate-section h2 {
+    font-size: 1.5em; /* Puțin mai mic, dar mai bold */
+    color: #0056b3; 
+    margin-bottom: 20px;
+    text-align: center;
+    border-bottom: 1px solid #dee2e6; /* Linie de separare mai fină */
     padding-bottom: 15px;
-    margin-bottom: 20px; /* Spațiu mai mare sub h1 */
-    font-size: 2.5em; /* Mărime font mai mare */
+    font-weight: 500;
 }
 
-p {
+.section-description {
+    font-size: 0.9em;
+    color: #6c757d; /* Gri standard */
     text-align: center;
-    color: #555;
-    line-height: 1.6; /* Spațiere între linii îmbunătățită */
-    max-width: 600px; /* Limitează lățimea paragrafului pentru lizibilitate */
+    margin-bottom: 25px;
+    min-height: 40px; /* Ajustat */
 }
 
-#fetchRatesBtn {
-    background-color: #007bff; /* Albastru primar (Bootstrap) */
+.action-button {
+    background-image: linear-gradient(to right, #007bff 0%, #0056b3 100%);
     color: white;
     border: none;
-    padding: 12px 25px;
-    font-size: 1em;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    margin-top: 15px;
-    margin-bottom: 25px; /* Spațiu sub buton */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-#fetchRatesBtn:hover {
-    background-color: #0056b3; /* Albastru mai închis la hover */
-    transform: translateY(-2px); /* Efect subtil de ridicare */
-}
-
-#fetchRatesBtn:active {
-    transform: translateY(0); /* Apasă butonul */
-}
-
-
-#ratesContainer {
-    background-color: #ffffff; /* Fundal alb pentru containerul de rezultate */
-    border: 1px solid #ddd; /* Chenar subtil */
-    border-radius: 8px; /* Colțuri rotunjite */
-    padding: 20px;
-    margin-top: 20px;
-    width: 90%; /* Lățime container */
-    max-width: 500px; /* Lățime maximă */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Umbră subtilă */
-    text-align: left; /* Aliniază textul la stânga în interiorul containerului */
-}
-
-#ratesContainer h2 {
-    color: #007bff; /* Albastru pentru titlul ratelor */
-    margin-top: 0;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-    font-size: 1.5em;
-}
-
-#ratesContainer ul {
-    list-style-type: none; /* Elimină bulinele */
-    padding-left: 0;
-}
-
-#ratesContainer li {
-    padding: 8px 0;
-    border-bottom: 1px dashed #eee; /* Linie de separare între rate */
+    padding: 12px 28px;
     font-size: 0.95em;
-    color: #444;
+    font-weight: 500;
+    border-radius: 25px; /* Butoane mai rotunjite */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block; 
+    margin: 10px auto 25px auto; 
+    min-width: 200px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
 }
 
-#ratesContainer li:last-child {
-    border-bottom: none; /* Elimină linia pentru ultimul element */
+.action-button:hover {
+    background-image: linear-gradient(to right, #0056b3 0%, #004085 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 86, 179, 0.4);
 }
 
-#ratesContainer .placeholder,
-#ratesContainer .loading {
-    text-align: center;
-    color: #777;
-    font-style: italic;
-    padding: 20px;
+.action-button:active {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 7px rgba(0, 86, 179, 0.3);
 }
 
-#ratesContainer .error {
-    color: #dc3545; 
-    font-weight: bold;
-    text-align: center;
-    padding: 10px;
-    border: 1px solid #f5c6cb;
-    background-color: #f8d7da;
-    border-radius: 5px;
+.date-selector-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
 }
-#ratesContainer .error-detail {
-    color: #721c24;
+
+.date-selector-container label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0;
+}
+
+.date-selector-container input[type="date"] {
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
     font-size: 0.9em;
-    margin-top: 5px;
+    width: auto;
+    min-width: 180px;
+    background-color: #fff;
+}
+.date-selector-container input[type="date"]:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    outline: none;
+}
+
+
+.rates-display-box {
+    background-color: #f9f9f9;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 20px;
+    margin-top: auto; 
+    min-height: 220px; /* Puțin mai înalt */
+    text-align: left;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.rates-display-box h2 { 
+    font-size: 1.2em; 
+    color: #343a40;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    font-weight: 600;
+}
+
+.rates-display-box ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.rates-display-box li {
+    padding: 10px 5px; 
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 0.9em;
+    color: #495057;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.rates-display-box li:last-child {
+    border-bottom: none;
+}
+
+.placeholder,
+.loading {
     text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    margin: auto; 
+    font-size: 0.95em;
 }
 
-
-#ratesContainer .update-time {
-    font-size: 0.8em;
-    color: #6c757d; 
-    text-align: right;
-    margin-bottom: 15px;
+.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    font-weight: 500;
 }
-
-@media (max-width: 600px) {
-    h1 {
-        font-size: 2em;
-    }
-    #ratesContainer {
-        width: 100%;
-        padding: 15px;
-    }
-    #fetchRatesBtn {
-        padding: 10px 20px;
-        font-size: 0.95em;
-    }
-}
-
-.data-source-info {
+.error-detail {
+    color: #721c24; 
     font-size: 0.85em;
-    color: #555; 
+}
+.error, .error-detail {
     text-align: center;
-    margin-top: 5px; 
-    margin-bottom: 15px; 
+    padding: 12px;
+    border-radius: 6px;
+    margin: 10px 0;
+}
+
+.update-time, .data-source-info {
+    font-size: 0.8em; 
+    color: #6c757d;
+    margin-bottom: 12px;
+    text-align: center; 
+}
+.update-time {
+    text-align: right;
+}
+.data-source-info {
+    margin-top: -8px;
+}
+
+.page-footer {
+    text-align: center;
+    margin-top: 50px;
+    padding-top: 25px;
+    border-top: 1px solid #dee2e6;
+    width: 100%;
+    max-width: 1100px;
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+/* Media query pentru aranjare orizontală pe ecrane mai mari */
+@media (min-width: 992px) { 
+    .content-wrapper {
+        flex-direction: row; 
+        align-items: stretch; 
+    }
+    .rate-section.card {
+         width: calc(50% - 15px); /* 15px este jumătate din gap-ul de 30px */
+    }
+    .date-selector-container {
+        flex-direction: row; 
+        justify-content: space-between; 
+        background-color: transparent; /* Eliminăm fundalul când e orizontal */
+        padding: 0;
+        margin-bottom: 25px;
+    }
+     .date-selector-container input[type="date"] {
+        margin-right: 10px; /* Spațiu între input și buton */
+    }
+    .date-selector-container button.action-button {
+        margin: 0; 
+        padding: 10px 15px; /* Puțin mai mic pentru aliniere */
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header h1 {
+        font-size: 2.2em;
+    }
+    .page-header .subtitle {
+        font-size: 1em;
+    }
+    .rate-section h2 {
+        font-size: 1.3em;
+    }
+    .action-button {
+        width: 90%; 
+        max-width: 280px;
+    }
+    .date-selector-container input[type="date"],
+    .date-selector-container button.action-button {
+        width: 100%;
+        max-width: none; 
+    }
+    .date-selector-container { /* Stack pe mobil */
+        flex-direction: column;
+        gap: 15px;
+    }
+     .rates-display-box li {
+        font-size: 0.85em;
+    }
 }
