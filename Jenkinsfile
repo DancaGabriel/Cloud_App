@@ -27,6 +27,10 @@ pipeline {
             }
             environment {
                 EXCHANGE_RATE_API_KEY = "dummy-key-pentru-jenkins-test"
+                 DB_HOST = "test_db_host"
+                 DB_USER = "test_db_user"
+                 DB_PASSWORD = "test_db_password"
+                 DB_NAME = "test_db_name"
             }
 
             steps {

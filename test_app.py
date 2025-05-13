@@ -1,6 +1,7 @@
 import pytest, os
 from app import app as flask_app 
-from app import API_KEY as flask_module_api_key
+from app import EXCHANGE_RATE_API_KEY as flask_module_api_key
+
 
 @pytest.fixture()
 def app():
