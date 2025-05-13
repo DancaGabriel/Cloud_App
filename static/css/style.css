@@ -1,4 +1,3 @@
-/* Stil simplu pentru a demonstra că CSS-ul funcționează */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Font modern */
     background-color: #f4f7f6; /* Fundal deschis, neutru */
@@ -99,7 +98,7 @@ p {
 }
 
 #ratesContainer .error {
-    color: #dc3545; /* Roșu pentru erori */
+    color: #dc3545; 
     font-weight: bold;
     text-align: center;
     padding: 10px;
@@ -117,12 +116,11 @@ p {
 
 #ratesContainer .update-time {
     font-size: 0.8em;
-    color: #6c757d; /* Gri text (Bootstrap secondary) */
+    color: #6c757d; 
     text-align: right;
     margin-bottom: 15px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 600px) {
     h1 {
         font-size: 2em;
@@ -135,4 +133,12 @@ p {
         padding: 10px 20px;
         font-size: 0.95em;
     }
+}
+
+.data-source-info {
+    font-size: 0.85em;
+    color: #555; 
+    text-align: center;
+    margin-top: 5px; 
+    margin-bottom: 15px; 
 }

@@ -23,11 +23,16 @@ document.getElementById('fetchRatesBtn').addEventListener('click', function() {
             } else if (data.rates) {
                 let content = `<h2>Rate de schimb pentru ${data.base_code}</h2>`;
                 content += `<p class="update-time">Ultima actualizare: ${data.last_update || 'N/A'}</p>`;
+                
+                if (data.data_source) {
+                    content += `<p class="data-source-info"><i>Sursa datelor: ${data.data_source}</i></p>`;
+                }
+
                 content += '<ul>';
                 const targetCurrencies = ['EUR', 'RON', 'GBP', 'JPY', 'CAD', 'AUD'];
                 for (const currency of targetCurrencies) {
                     if (data.rates[currency]) {
-                        content += `<li>1 ${data.base_code} = ${data.rates[currency].toFixed(4)} ${currency}</li>`;
+                        content += `<li>1 ${data.base_code} = ${Number(data.rates[currency]).toFixed(4)} ${currency}</li>`;
                     }
                 }
                 content += '</ul>';

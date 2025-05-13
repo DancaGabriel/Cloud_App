@@ -157,9 +157,13 @@ def get_exchange_rates_route():
     print(f"Se caută rate în BD pentru data: {today_utc}, moneda de bază: {base_currency_to_fetch}")
     rates_from_db = get_rates_from_db(today_utc, base_currency_to_fetch)
 
+    data_to_return = {} 
+
     if rates_from_db:
         print("Rate găsite în BD. Se returnează din BD.")
-        return jsonify(rates_from_db)
+        data_to_return = rates_from_db
+        data_to_return['data_source'] = "baza de date (cache local)"
+        return jsonify(data_to_return)
     else:
         print(f"Ratele pentru {today_utc} nu sunt în BD. Se apelează API-ul extern.")
         if not EXCHANGE_RATE_API_KEY:
@@ -185,25 +189,27 @@ def get_exchange_rates_route():
                     api_date_for_print = api_dt_obj.date() if api_dt_obj else 'N/A'
                     print(f"Data din API ({api_date_for_print}) nu corespunde cu ziua curentă UTC ({today_utc}). Ratele nu vor fi stocate.")
                 
-                return jsonify({
+                data_to_return = {
                     "base_code": base_c,
                     "rates": conversion_r,
-                    "last_update": time_last_update_utc_str
-                })
+                    "last_update": time_last_update_utc_str,
+                    "data_source": "API-ul extern" # Am adăugat sursa
+                }
+                return jsonify(data_to_return)
             else:
                 error_type = api_data.get("error-type", "Eroare necunoscută API extern")
                 print(f"Eroare de la API-ul extern: {error_type}")
-                return jsonify({"error": f"Eroare API extern: {error_type}", "details": api_data}), 500
+                return jsonify({"error": f"Eroare API extern: {error_type}", "details": api_data, "data_source": "api_error"}), 500
 
         except requests.exceptions.HTTPError as http_err:
             print(f"Eroare HTTP: {http_err}")
-            return jsonify({"error": f"Eroare HTTP: {http_err}", "url_called": api_url}), 500
+            return jsonify({"error": f"Eroare HTTP: {http_err}", "url_called": api_url, "data_source": "request_error"}), 500
         except requests.exceptions.RequestException as req_err:
             print(f"Eroare Request: {req_err}")
-            return jsonify({"error": f"Eroare la request către API-ul extern: {req_err}", "url_called": api_url}), 500
+            return jsonify({"error": f"Eroare la request către API-ul extern: {req_err}", "url_called": api_url, "data_source": "request_error"}), 500
         except ValueError as json_err:
             print(f"Eroare decodare JSON: {json_err}")
-            return jsonify({"error": f"Eroare la decodarea răspunsului JSON de la API-ul extern: {json_err}"}), 500
+            return jsonify({"error": f"Eroare la decodarea răspunsului JSON de la API-ul extern: {json_err}", "data_source": "request_error"}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
