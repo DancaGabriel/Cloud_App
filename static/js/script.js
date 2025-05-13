@@ -1,17 +1,59 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const hamburgerMenuIcon = document.getElementById('hamburgerMenuIcon');
+    const mobileDropdownMenu = document.getElementById('mobileDropdownMenu');
+
+    if (hamburgerMenuIcon && mobileDropdownMenu) {
+        hamburgerMenuIcon.addEventListener('click', function(event) {
+            event.stopPropagation(); 
+            const isMenuOpen = mobileDropdownMenu.classList.toggle('open');
+            hamburgerMenuIcon.setAttribute('aria-expanded', isMenuOpen);
+            mobileDropdownMenu.setAttribute('aria-hidden', !isMenuOpen);
+            
+            if (isMenuOpen) {
+                hamburgerMenuIcon.innerHTML = '&#x2715;'; 
+            } else {
+                hamburgerMenuIcon.innerHTML = '&#9776;'; 
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!mobileDropdownMenu || !hamburgerMenuIcon) return;
+            const isClickInsideMenu = mobileDropdownMenu.contains(event.target);
+            const isClickOnHamburger = hamburgerMenuIcon.contains(event.target);
+
+            if (!isClickInsideMenu && !isClickOnHamburger && mobileDropdownMenu.classList.contains('open')) {
+                mobileDropdownMenu.classList.remove('open');
+                hamburgerMenuIcon.setAttribute('aria-expanded', 'false');
+                mobileDropdownMenu.setAttribute('aria-hidden', 'true');
+                hamburgerMenuIcon.innerHTML = '&#9776;';
+            }
+        });
+    }
+
     const currentRatesBtn = document.getElementById('fetchCurrentRatesBtn');
     const currentRatesContainer = document.getElementById('currentRatesContainer');
-    
     const frankfurterBtn = document.getElementById('fetchFrankfurterBtn');
     const frankfurterDateInput = document.getElementById('frankfurterDateInput');
     const frankfurterRatesContainer = document.getElementById('frankfurterRatesContainer');
+    const baseCurrencySelect = document.getElementById('baseCurrencySelect');
+    let currentSelectedBaseCurrency = 'USD'; 
+
+    if (baseCurrencySelect) {
+        baseCurrencySelect.value = currentSelectedBaseCurrency; 
+        baseCurrencySelect.addEventListener('change', function() {
+            currentSelectedBaseCurrency = this.value;
+            if(currentRatesContainer) currentRatesContainer.innerHTML = '<p class="placeholder">Moneda de bază schimbată. Apasă butonul pentru actualizare.</p>';
+            if(frankfurterRatesContainer) frankfurterRatesContainer.innerHTML = '<p class="placeholder">Moneda de bază schimbată. Selectează o dată și apasă butonul.</p>';
+        });
+    }
 
     function renderRates(data, containerElement) {
+        if (!containerElement) return;
         if (data.error) {
             let errorMsg = `<p class="error">Eroare: ${data.error}</p>`;
             if(data.details && data.details['error-type']) {
                 errorMsg += `<p class="error-detail">Tip eroare API: ${data.details['error-type']}</p>`;
-            } else if (data.details && data.details.message) { // Specific pentru erori Frankfurter
+            } else if (data.details && data.details.message) { 
                  errorMsg += `<p class="error-detail">Mesaj API: ${data.details.message}</p>`;
             }
             containerElement.innerHTML = errorMsg;
@@ -25,8 +67,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 content += `<p class="data-source-info"><i>Sursa datelor: ${data.data_source}</i></p>`;
             }
             content += '<ul>';
-            const targetCurrencies = ['EUR', 'RON', 'GBP', 'JPY', 'CAD', 'AUD'];
+            const targetCurrencies = ['EUR', 'RON', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'USD']; 
             for (const currency of targetCurrencies) {
+                if (currency === (data.base_code || data.base)) continue; 
                 if (data.rates[currency] !== undefined && data.rates[currency] !== null) {
                     content += `<li>1 ${data.base_code || data.base} = ${Number(data.rates[currency]).toFixed(4)} ${currency}</li>`;
                 }
@@ -39,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchDataAndDisplay(apiUrl, containerElement) {
+        if (!containerElement) return;
         containerElement.innerHTML = '<p class="loading">Se încarcă datele...</p>';
         fetch(apiUrl)
             .then(response => {
@@ -64,36 +108,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (currentRatesBtn) {
         currentRatesBtn.addEventListener('click', function() {
-            fetchDataAndDisplay('/get-exchange-rates', currentRatesContainer);
+            fetchDataAndDisplay(`/get-exchange-rates?base=${currentSelectedBaseCurrency}`, currentRatesContainer);
         });
     }
 
     if (frankfurterBtn) {
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 1);
-        const yyyy = yesterday.getFullYear();
-        const mm = String(yesterday.getMonth() + 1).padStart(2, '0');
-        const dd = String(yesterday.getDate()).padStart(2, '0');
+        const todayJS = new Date();
+        const yesterdayJS = new Date(todayJS);
+        yesterdayJS.setDate(todayJS.getDate() - 1);
         
+        constइस्लामाबाद = yesterdayJS.getFullYear();
+        const mm = String(yesterdayJS.getMonth() + 1).padStart(2, '0');
+        const dd = String(yesterdayJS.getDate()).padStart(2, '0');
+        
+        const maxDateString = `${yyyy}-${mm}-${dd}`;
+        const minDateString = "1999-01-04";
+
         if (frankfurterDateInput) {
-            frankfurterDateInput.max = `${yyyy}-${mm}-${dd}`;
-            frankfurterDateInput.min = "1999-01-04"; 
+            frankfurterDateInput.value = maxDateString; 
+            frankfurterDateInput.max = maxDateString;
+            frankfurterDateInput.min = minDateString; 
         }
 
         frankfurterBtn.addEventListener('click', function() {
-            const selectedDate = frankfurterDateInput.value;
-            if (!selectedDate) {
-                frankfurterRatesContainer.innerHTML = '<p class="error">Te rog selectează o dată.</p>';
+            const selectedDateStr = frankfurterDateInput.value;
+            if (!selectedDateStr) {
+                if(frankfurterRatesContainer) frankfurterRatesContainer.innerHTML = '<p class="error">Te rog selectează o dată.</p>';
                 return;
             }
-            const dateObj = new Date(selectedDate);
-            const minDate = new Date("1999-01-04");
-            if (dateObj < minDate || dateObj > yesterday) {
-                 frankfurterRatesContainer.innerHTML = `<p class="error">Data trebuie să fie între 04-01-1999 și ziua de ieri.</p>`;
+
+            const selectedDateParts = selectedDateStr.split('-').map(Number);
+            const selectedDateObj = new Date(Date.UTC(selectedDateParts[0], selectedDateParts[1] - 1, selectedDateParts[2]));
+            const minDateParts = minDateString.split('-').map(Number);
+            const minDateObj = new Date(Date.UTC(minDateParts[0], minDateParts[1] - 1, minDateParts[2]));
+            const maxDateParts = maxDateString.split('-').map(Number);
+            const maxDateObj = new Date(Date.UTC(maxDateParts[0], maxDateParts[1] - 1, maxDateParts[2]));
+            
+            if (selectedDateObj < minDateObj || selectedDateObj > maxDateObj) {
+                 if(frankfurterRatesContainer) frankfurterRatesContainer.innerHTML = `<p class="error">Data trebuie să fie între ${minDateString.split('-').reverse().join('.')} și ${maxDateString.split('-').reverse().join('.')}.</p>`;
                  return;
             }
-            fetchDataAndDisplay(`/get-frankfurter-historical-rates?date=${selectedDate}&base=USD`, frankfurterRatesContainer);
+            fetchDataAndDisplay(`/get-frankfurter-historical-rates?date=${selectedDateStr}&base=${currentSelectedBaseCurrency}`, frankfurterRatesContainer);
         });
     }
 });

@@ -7,175 +7,307 @@
 
 body {
     font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #eef1f5; /* Fundal foarte deschis, neutru */
-    color: #3a3b3c; /* Culoare text principală, mai soft */
+    background-color: #eef1f5;
+    color: #3a3b3c;
     line-height: 1.65;
+    font-weight: 400;
+    padding-top: 0; /* Eliminăm padding-ul de sus, meniul nu mai împinge conținutul direct */
+}
+
+.page-content-wrapper {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh;
-    padding: 25px;
-    font-weight: 400;
+    padding: 20px; 
+    margin-top: 70px; /* Spațiu pentru meniul fix */
 }
 
+/* Hamburger Menu Button */
+.hamburger-menu-button {
+    position: fixed;
+    top: 15px; /* Ajustat puțin mai sus */
+    left: 15px;
+    z-index: 1002; 
+    background-color: #ffffff; /* Fundal alb pentru icon */
+    color: #2c3e50; /* Culoare icon închisă */
+    border: 1px solid #dee2e6; /* Border subtil */
+    font-size: 1.5em; 
+    padding: 8px 12px; 
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    line-height: 1; 
+}
+
+.hamburger-menu-button:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Dropdown Menu */
+.mobile-dropdown-menu {
+    position: fixed;
+    top: 65px; /* Poziționat sub iconul hamburger (15px top + ~40px înălțime + 10px spațiu) */
+    left: 15px; /* Aliniat cu iconul hamburger */
+    width: 250px; /* Lățime pentru dropdown */
+    background-color: #ffffff; 
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    z-index: 1001; 
+    overflow: hidden; /* Ascunde conținutul care depășește colțurile rotunjite */
+    
+    /* Inițial ascuns și pregătit pentru tranziție */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95); /* Efect de "drop" subtil */
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, visibility 0.2s ease-in-out;
+}
+
+.mobile-dropdown-menu.open { 
+    display: block; /* Sau flex dacă e nevoie de flex properties pentru conținut */
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.mobile-dropdown-menu ul {
+    list-style-type: none;
+    padding: 8px 0; /* Padding intern pentru listă */
+    margin:0;  
+}
+
+.mobile-dropdown-menu li a {
+    display: block;
+    padding: 12px 20px; /* Padding itemi meniu */
+    text-decoration: none;
+    color: #343a40; /* Text mai închis pentru lizibilitate pe fundal alb */
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    font-size: 0.95em;
+    border-bottom: none; /* Eliminăm border-bottom individual */
+}
+.mobile-dropdown-menu li:not(:last-child) a {
+    border-bottom: 1px solid #f0f2f5; /* Linie fină între itemi */
+}
+
+
+.mobile-dropdown-menu li a:hover {
+    background-color: #007bff;
+    color: #ffffff;
+}
+
+/* Eliminăm border-top specific de la primul element, nu mai e necesar cu noul padding */
+.mobile-dropdown-menu li:first-child a {
+    border-top: none; 
+}
+
+
+/* Page Header (sub meniu, dacă există) */
 .page-header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     width: 100%;
-    max-width: 1100px; 
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    /* margin-top este acum gestionat de padding-ul .page-content-wrapper */
 }
 
+/* Restul CSS-ului rămâne la fel ca în versiunea anterioară */
+/* (stilurile pentru .page-header h1, .subtitle, .base-currency-selector-section, .content-wrapper, etc.) */
+/* Asigură-te că ai tot CSS-ul de la răspunsul anterior de aici în jos */
 .page-header h1 {
-    font-size: 2.6em; /* Puțin mai mare */
-    color: #2c3e50; /* Albastru închis elegant */
+    font-size: 2.4em;
+    color: #2c3e50;
     margin-bottom: 8px;
-    font-weight: 700; /* Mai bold */
+    font-weight: 700;
     letter-spacing: -0.5px;
 }
-
 .page-header .subtitle {
-    font-size: 1.15em;
-    color: #525f7f; /* Gri-albăstrui */
+    font-size: 1.1em;
+    color: #525f7f;
     font-weight: 300;
 }
-
+.base-currency-selector-section.card {
+    background-color: #ffffff;
+    padding: 25px 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
+    margin-bottom: 30px;
+    width: 100%;
+    max-width: 1100px; 
+    margin-left: auto;
+    margin-right: auto;
+}
+.base-currency-selector-section h2 {
+    font-size: 1.4em;
+    color: #0056b3;
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 12px;
+    font-weight: 500;
+}
+.currency-selector-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.currency-selector-controls label {
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.95em;
+}
+.currency-selector-controls select {
+    padding: 10px 14px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.95em;
+    background-color: #fff;
+    min-width: 220px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.currency-selector-controls select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    outline: none;
+}
+.small-text {
+    font-size: 0.85em;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 5px;
+}
 .content-wrapper {
     display: flex;
     flex-direction: column; 
     gap: 30px; 
     width: 100%;
     max-width: 1200px; 
+    margin-left: auto;
+    margin-right: auto;
     margin-bottom: 40px;
 }
-
-.rate-section.card { /* Aplicăm stilul de card secțiunilor */
+.rate-section.card {
     background-color: #ffffff;
-    padding: 30px; 
+    padding: 25px 30px; 
     border-radius: 10px; 
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07); /* Umbră mai subtilă */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
     flex-basis: 0; 
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
 .rate-section.card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
-
 .rate-section h2 {
-    font-size: 1.5em; /* Puțin mai mic, dar mai bold */
+    font-size: 1.4em; 
     color: #0056b3; 
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     text-align: center;
-    border-bottom: 1px solid #dee2e6; /* Linie de separare mai fină */
-    padding-bottom: 15px;
+    border-bottom: 1px solid #dee2e6; 
+    padding-bottom: 12px;
     font-weight: 500;
 }
-
 .section-description {
     font-size: 0.9em;
-    color: #6c757d; /* Gri standard */
+    color: #6c757d; 
     text-align: center;
-    margin-bottom: 25px;
-    min-height: 40px; /* Ajustat */
+    margin-bottom: 20px;
+    min-height: 30px;
 }
-
 .action-button {
     background-image: linear-gradient(to right, #007bff 0%, #0056b3 100%);
     color: white;
     border: none;
-    padding: 12px 28px;
-    font-size: 0.95em;
+    padding: 10px 25px;
+    font-size: 0.9em;
     font-weight: 500;
-    border-radius: 25px; /* Butoane mai rotunjite */
+    border-radius: 20px; 
     cursor: pointer;
     transition: all 0.3s ease;
     display: block; 
-    margin: 10px auto 25px auto; 
-    min-width: 200px;
+    margin: 10px auto 20px auto; 
+    min-width: 180px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 3px 8px rgba(0, 123, 255, 0.25);
 }
-
 .action-button:hover {
     background-image: linear-gradient(to right, #0056b3 0%, #004085 100%);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(0, 86, 179, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0, 86, 179, 0.35);
 }
-
 .action-button:active {
     transform: translateY(-1px);
-    box-shadow: 0 3px 7px rgba(0, 86, 179, 0.3);
+    box-shadow: 0 2px 5px rgba(0, 86, 179, 0.25);
 }
-
 .date-selector-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 30px;
-    padding: 15px;
+    gap: 10px; 
+    margin-bottom: 20px; 
+    padding: 10px; 
     background-color: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 6px;
 }
-
 .date-selector-container label {
     font-weight: 500;
     color: #495057;
     margin-bottom: 0;
-}
-
-.date-selector-container input[type="date"] {
-    padding: 10px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
     font-size: 0.9em;
+}
+.date-selector-container input[type="date"] {
+    padding: 8px 10px; 
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    font-size: 0.85em; 
     width: auto;
-    min-width: 180px;
+    min-width: 160px; 
     background-color: #fff;
 }
 .date-selector-container input[type="date"]:focus {
     border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    box-shadow: 0 0 0 0.15rem rgba(0,123,255,.25); 
     outline: none;
 }
-
-
 .rates-display-box {
     background-color: #f9f9f9;
     border: 1px solid #e9ecef;
     border-radius: 6px;
-    padding: 20px;
+    padding: 15px; 
     margin-top: auto; 
-    min-height: 220px; /* Puțin mai înalt */
+    min-height: 200px; 
     text-align: left;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
 }
-
 .rates-display-box h2 { 
-    font-size: 1.2em; 
+    font-size: 1.15em; 
     color: #343a40;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
     font-weight: 600;
 }
-
 .rates-display-box ul {
     list-style-type: none;
     padding-left: 0;
     margin-bottom: 0;
 }
-
 .rates-display-box li {
-    padding: 10px 5px; 
+    padding: 8px 5px; 
     border-bottom: 1px solid #f1f3f5;
-    font-size: 0.9em;
+    font-size: 0.85em; 
     color: #495057;
     display: flex;
     justify-content: space-between;
@@ -184,16 +316,20 @@ body {
 .rates-display-box li:last-child {
     border-bottom: none;
 }
-
 .placeholder,
 .loading {
     text-align: center;
     color: #6c757d;
     font-style: italic;
     margin: auto; 
-    font-size: 0.95em;
+    font-size: 0.9em; 
 }
-
+.error, .error-detail {
+    text-align: center;
+    padding: 10px; 
+    border-radius: 6px;
+    margin: 8px 0; 
+}
 .error {
     color: #721c24;
     background-color: #f8d7da;
@@ -202,88 +338,95 @@ body {
 }
 .error-detail {
     color: #721c24; 
-    font-size: 0.85em;
-}
-.error, .error-detail {
-    text-align: center;
-    padding: 12px;
-    border-radius: 6px;
-    margin: 10px 0;
-}
-
-.update-time, .data-source-info {
     font-size: 0.8em; 
+}
+.update-time, .data-source-info {
+    font-size: 0.75em; 
     color: #6c757d;
-    margin-bottom: 12px;
+    margin-bottom: 10px; 
     text-align: center; 
 }
 .update-time {
     text-align: right;
 }
 .data-source-info {
-    margin-top: -8px;
+    margin-top: -6px; 
 }
-
 .page-footer {
     text-align: center;
-    margin-top: 50px;
-    padding-top: 25px;
+    margin-top: 40px; 
+    padding-top: 20px; 
     border-top: 1px solid #dee2e6;
     width: 100%;
-    max-width: 1100px;
-    font-size: 0.85em;
+    max-width: 1100px; 
+    font-size: 0.8em; 
     color: #6c757d;
+    margin-left: auto;
+    margin-right: auto;
 }
-
-/* Media query pentru aranjare orizontală pe ecrane mai mari */
 @media (min-width: 992px) { 
     .content-wrapper {
         flex-direction: row; 
         align-items: stretch; 
     }
     .rate-section.card {
-         width: calc(50% - 15px); /* 15px este jumătate din gap-ul de 30px */
+         width: calc(50% - 15px); 
     }
     .date-selector-container {
         flex-direction: row; 
-        justify-content: space-between; 
-        background-color: transparent; /* Eliminăm fundalul când e orizontal */
+        justify-content: space-around; 
+        align-items: center;
+        background-color: transparent;
         padding: 0;
-        margin-bottom: 25px;
+        margin-bottom: 20px; 
     }
      .date-selector-container input[type="date"] {
-        margin-right: 10px; /* Spațiu între input și buton */
+        margin-right: 8px; 
     }
     .date-selector-container button.action-button {
         margin: 0; 
-        padding: 10px 15px; /* Puțin mai mic pentru aliniere */
+        padding: 10px 15px;
+        min-width: auto;
+    }
+    .base-currency-selector-section.card {
+        margin-bottom: 35px; 
+    }
+    .currency-selector-controls {
+        margin-bottom: 0; 
     }
 }
-
 @media (max-width: 768px) {
+    .page-content-wrapper {
+        padding-top: 70px; /* Asigură spațiu pt icon meniu */
+    }
     .page-header h1 {
-        font-size: 2.2em;
+        font-size: 1.8em; 
     }
     .page-header .subtitle {
-        font-size: 1em;
+        font-size: 0.95em; 
     }
+    .base-currency-selector-section h2,
     .rate-section h2 {
-        font-size: 1.3em;
+        font-size: 1.2em; 
     }
     .action-button {
-        width: 90%; 
-        max-width: 280px;
+        width: 100%; 
+        max-width: none; 
     }
     .date-selector-container input[type="date"],
     .date-selector-container button.action-button {
         width: 100%;
         max-width: none; 
     }
-    .date-selector-container { /* Stack pe mobil */
+    .date-selector-container { 
         flex-direction: column;
         gap: 15px;
     }
      .rates-display-box li {
-        font-size: 0.85em;
+        font-size: 0.8em; 
+        flex-direction: column;
+        align-items: flex-start; 
+        text-align: left;
+        gap: 4px;
     }
 }

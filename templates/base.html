@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Convertor Valutar Inteligent{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <button id="hamburgerMenuIcon" class="hamburger-menu-button" aria-label="Meniu Principal" aria-expanded="false" aria-controls="mobileDropdownMenu">
+        &#9776;
+    </button>
+
+    <nav id="mobileDropdownMenu" class="mobile-dropdown-menu" aria-hidden="true">
+        <ul>
+            <li><a href="{{ url_for('hello_world') }}">Home (Rate Curente & Istorice)</a></li>
+            <li><a href="{{ url_for('visualize_page') }}">Vizualizare Date</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-content-wrapper">
+        {% block page_content %}{% endblock %}
+    </div>
+    
+    <footer class="page-footer">
+        <p>&copy; {{ year }} Aplicația de Curs Valutar. Creat cu Flask și ❤️.</p>
+    </footer>
+
+    {% block base_scripts %}
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% endblock %}
+    {% block page_scripts %}{% endblock %}
+</body>
+</html>

@@ -10,21 +10,18 @@ load_dotenv()
 app = Flask(__name__)
 
 EXCHANGE_RATE_API_KEY = os.getenv('EXCHANGE_RATE_API_KEY')
-if not EXCHANGE_RATE_API_KEY:
-    print("Eroare: Variabila de mediu EXCHANGE_RATE_API_KEY nu este setată!")
-
 DB_HOST = os.getenv('DB_HOST')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
 
+if not EXCHANGE_RATE_API_KEY:
+    print("Eroare: Variabila de mediu EXCHANGE_RATE_API_KEY nu este setată!")
 if not all([DB_HOST, DB_USER, DB_PASSWORD, DB_NAME]):
     print("Eroare: Una sau mai multe variabile de mediu pentru baza de date nu sunt setate (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)!")
 
-# Definim constante pentru numele surselor API
 SOURCE_EXCHANGERATE_API = "ExchangeRateAPI.com"
 SOURCE_FRANKFURTER_APP = "Frankfurter.app"
-
 
 def get_db_connection():
     try:
@@ -40,21 +37,43 @@ def get_db_connection():
         return None
 
 def parse_api_datetime_to_db_format(api_datetime_str):
+    # Încearcă să parseze formatul RFC 2822 (cu %z care așteaptă +HHMM sau -HHMM)
     try:
         dt_object_aware = datetime.strptime(api_datetime_str, '%a, %d %b %Y %H:%M:%S %z')
         dt_object_utc_naive = dt_object_aware.astimezone(timezone.utc).replace(tzinfo=None)
         return dt_object_utc_naive
     except ValueError as e:
-        # Acest fallback este mai puțin probabil să fie necesar dacă construim corect string-ul pentru Frankfurter
-        print(f"Eroare la parsarea datei API '{api_datetime_str}': {e}")
+        # print(f"Info: Parsarea datei API '{api_datetime_str}' cu formatul standard %z a eșuat inițial: {e}")
+        # Fallback pentru formate unde %z ar putea avea ':' (ex: +00:00) sau lipsește complet
         try:
-            dt_object_utc_naive = datetime.strptime(api_datetime_str[:-6], '%a, %d %b %Y %H:%M:%S')
+            cleaned_str = api_datetime_str
+            # Standardizează offset-ul: elimină ':' dacă există (ex: +00:00 -> +0000)
+            if len(cleaned_str) > 5 and cleaned_str[-3] == ':':
+                cleaned_str = cleaned_str[:-3] + cleaned_str[-2:]
+            
+            # Elimină sufixe textuale de fus orar și adaugă offset UTC implicit dacă lipsește un offset numeric
+            parts = cleaned_str.split()
+            potential_offset_part = parts[-1]
+            is_numeric_offset = False
+            if len(potential_offset_part) == 5 and (potential_offset_part.startswith('+') or potential_offset_part.startswith('-')) and potential_offset_part[1:].isdigit():
+                is_numeric_offset = True
+            
+            if potential_offset_part.isalpha() and potential_offset_part.upper() in ["GMT", "UTC", "Z"]:
+                datetime_part_str = " ".join(parts[:-1]) + " +0000"
+            elif is_numeric_offset:
+                datetime_part_str = cleaned_str # Deja are formatul +HHMM
+            else: # Nu are un offset numeric recunoscut sau un sufix textual clar
+                datetime_part_str_base = " ".join(parts[:5]) # Presupunem formatul 'Zi, ZZ Luna Anul HH:MM:SS'
+                datetime_part_str = datetime_part_str_base + " +0000" # Presupunem UTC
+
+            dt_object_aware = datetime.strptime(datetime_part_str, '%a, %d %b %Y %H:%M:%S %z')
+            dt_object_utc_naive = dt_object_aware.astimezone(timezone.utc).replace(tzinfo=None)
             return dt_object_utc_naive
-        except ValueError:
+        except ValueError as e_final:
+            print(f"Eroare finală CRITICĂ la parsarea datei API '{api_datetime_str}': {e_final}")
             return None
 
-# Funcția get_rates_from_db rămâne neschimbată în logica sa internă,
-# dar va fi apelată cu source_api diferit
+
 def get_rates_from_db(query_date_obj, base_curr, source_api):
     conn = get_db_connection()
     if not conn:
@@ -75,8 +94,8 @@ def get_rates_from_db(query_date_obj, base_curr, source_api):
         if rows:
             rates = {row['target_currency_code']: float(row['rate_value']) for row in rows}
             source_dt_obj_utc_naive = rows[0]['source_last_updated_utc']
-            last_update_str = "N/A"
-            if source_dt_obj_utc_naive:
+            last_update_str = "N/A" # Default
+            if source_dt_obj_utc_naive: # Poate fi None dacă a eșuat parsarea la inserare
                 source_dt_obj_utc_aware = source_dt_obj_utc_naive.replace(tzinfo=timezone.utc)
                 base_time_str = source_dt_obj_utc_aware.strftime('%a, %d %b %Y %H:%M:%S')
                 offset_seconds = source_dt_obj_utc_aware.utcoffset().total_seconds()
@@ -100,8 +119,6 @@ def get_rates_from_db(query_date_obj, base_curr, source_api):
             
     return rates_data_from_db
 
-# Funcția insert_rates_into_db rămâne neschimbată în logica sa internă,
-# dar va fi apelată cu source_api diferit
 def insert_rates_into_db(base_code, rates_dict, effective_date_obj, source_last_update_utc_str, source_api):
     conn = get_db_connection()
     if not conn:
@@ -112,9 +129,9 @@ def insert_rates_into_db(base_code, rates_dict, effective_date_obj, source_last_
     
     source_datetime_db_format = parse_api_datetime_to_db_format(source_last_update_utc_str)
     if not source_datetime_db_format:
-        print(f"Nu s-a putut parsa source_last_update_utc_str: {source_last_update_utc_str} pentru inserare (sursa: {source_api}).")
+        # Mesajul de eroare este deja printat în parse_api_datetime_to_db_format
         if conn and conn.is_connected(): conn.close()
-        return False
+        return False # Critical: cannot proceed if timestamp cannot be parsed
         
     insert_query = """
         INSERT IGNORE INTO daily_exchange_rates 
@@ -124,14 +141,15 @@ def insert_rates_into_db(base_code, rates_dict, effective_date_obj, source_last_
     try:
         conn.start_transaction()
         for target_code, rate_value in rates_dict.items():
-            cursor.execute(insert_query, (
-                effective_date_obj,
-                base_code,
-                target_code,
-                float(rate_value),
-                source_api,
-                source_datetime_db_format
-            ))
+            if rate_value is not None: 
+                 cursor.execute(insert_query, (
+                    effective_date_obj,
+                    base_code,
+                    target_code,
+                    float(rate_value),
+                    source_api,
+                    source_datetime_db_format
+                ))
         conn.commit()
         print(f"Ratele pentru {base_code} din {effective_date_obj} (sursa: {source_api}) inserate/ignorate cu succes.")
         success = True
@@ -149,25 +167,28 @@ def hello_world():
      current_year = datetime.now().year
      return render_template('index.html', year=current_year)
 
+@app.route('/visualize')
+def visualize_page():
+    current_year = datetime.now().year
+    return render_template('visualize.html', year=current_year)
+
 @app.route('/get-exchange-rates')
 def get_exchange_rates_route():
     if not all([DB_HOST, DB_USER, DB_PASSWORD, DB_NAME]):
         return jsonify({"error": "Configurația bazei de date este incompletă pe server."}), 500
 
     today_utc_date = datetime.now(timezone.utc).date()
-    base_currency_to_fetch = "USD" # Moneda de bază implicită pentru API-ul curent
+    base_currency_to_fetch = request.args.get('base', 'USD').upper()
     
     print(f"Se caută rate în BD pentru data: {today_utc_date}, moneda de bază: {base_currency_to_fetch}, sursa: {SOURCE_EXCHANGERATE_API}")
     rates_from_db = get_rates_from_db(today_utc_date, base_currency_to_fetch, SOURCE_EXCHANGERATE_API)
-    data_to_return = {}
-
+    
     if rates_from_db:
-        print(f"Rate ({SOURCE_EXCHANGERATE_API}) găsite în BD. Se returnează din BD.")
-        data_to_return = rates_from_db
-        data_to_return['data_source'] = "baza de date (cache local)"
-        return jsonify(data_to_return)
+        print(f"Rate ({SOURCE_EXCHANGERATE_API}) găsite în BD pentru {base_currency_to_fetch}. Se returnează din BD.")
+        rates_from_db['data_source'] = "baza de date (cache local)"
+        return jsonify(rates_from_db)
     else:
-        print(f"Ratele pentru {today_utc_date} ({SOURCE_EXCHANGERATE_API}) nu sunt în BD. Se apelează API-ul extern.")
+        print(f"Ratele pentru {today_utc_date} ({SOURCE_EXCHANGERATE_API}, base: {base_currency_to_fetch}) nu sunt în BD. Se apelează API-ul extern.")
         if not EXCHANGE_RATE_API_KEY:
             return jsonify({"error": f"API Key pentru {SOURCE_EXCHANGERATE_API} nu este configurat.", "data_source": "config_error"}), 500
 
@@ -180,43 +201,39 @@ def get_exchange_rates_route():
             api_data = response.json()
             
             if api_data.get("result") == "success":
-                print(f"Date primite cu succes de la {SOURCE_EXCHANGERATE_API}.")
+                print(f"Date primite cu succes de la {SOURCE_EXCHANGERATE_API} pentru baza {base_currency_to_fetch}.")
                 base_c = api_data.get("base_code")
                 conversion_r = api_data.get("conversion_rates")
                 time_last_update_utc_str = api_data.get("time_last_update_utc")
 
-                api_dt_obj = parse_api_datetime_to_db_format(time_last_update_utc_str)
-                if api_dt_obj and api_dt_obj.date() == today_utc_date:
-                    insert_rates_into_db(base_c, conversion_r, today_utc_date, time_last_update_utc_str, SOURCE_EXCHANGERATE_API)
+                api_dt_obj_parsed = parse_api_datetime_to_db_format(time_last_update_utc_str)
+                if api_dt_obj_parsed and api_dt_obj_parsed.date() == today_utc_date:
+                    if base_c and conversion_r:
+                        insert_rates_into_db(base_c, conversion_r, today_utc_date, time_last_update_utc_str, SOURCE_EXCHANGERATE_API)
                 else:
-                    api_date_for_print = api_dt_obj.date() if api_dt_obj else 'N/A'
+                    api_date_for_print = api_dt_obj_parsed.date() if api_dt_obj_parsed else 'N/A'
                     print(f"Data din API ({SOURCE_EXCHANGERATE_API}: {api_date_for_print}) nu corespunde cu ziua curentă UTC ({today_utc_date}). Ratele nu vor fi stocate.")
                 
-                data_to_return = {
+                return jsonify({
                     "base_code": base_c,
                     "rates": conversion_r,
                     "last_update": time_last_update_utc_str,
                     "data_source": f"{SOURCE_EXCHANGERATE_API} (extern)"
-                }
-                return jsonify(data_to_return)
+                })
             else:
                 error_type = api_data.get("error-type", f"Eroare necunoscută API ({SOURCE_EXCHANGERATE_API})")
-                print(f"Eroare de la API-ul extern ({SOURCE_EXCHANGERATE_API}): {error_type}")
                 return jsonify({"error": f"Eroare API extern ({SOURCE_EXCHANGERATE_API}): {error_type}", "details": api_data, "data_source": "api_error"}), 500
         except requests.exceptions.HTTPError as http_err:
-            print(f"Eroare HTTP ({SOURCE_EXCHANGERATE_API}): {http_err}")
             return jsonify({"error": f"Eroare HTTP ({SOURCE_EXCHANGERATE_API}): {http_err}", "url_called": api_url, "data_source": "request_error"}), 500
         except requests.exceptions.RequestException as req_err:
-            print(f"Eroare Request ({SOURCE_EXCHANGERATE_API}): {req_err}")
             return jsonify({"error": f"Eroare la request către API-ul extern ({SOURCE_EXCHANGERATE_API}): {req_err}", "url_called": api_url, "data_source": "request_error"}), 500
-        except ValueError as json_err:
-            print(f"Eroare decodare JSON ({SOURCE_EXCHANGERATE_API}): {json_err}")
+        except ValueError as json_err: # Include JSONDecodeError
             return jsonify({"error": f"Eroare la decodarea răspunsului JSON de la API-ul extern ({SOURCE_EXCHANGERATE_API}): {json_err}", "data_source": "request_error"}), 500
 
 @app.route('/get-frankfurter-historical-rates')
 def get_frankfurter_historical_rates_route():
     selected_date_str = request.args.get('date')
-    base_currency_frankfurter = request.args.get('base', 'USD').upper() # Monedă de bază pentru Frankfurter
+    base_currency_frankfurter = request.args.get('base', 'USD').upper()
 
     if not selected_date_str:
         return jsonify({"error": "Parametrul 'date' (YYYY-MM-DD) este necesar.", "data_source": "user_error"}), 400
@@ -224,25 +241,21 @@ def get_frankfurter_historical_rates_route():
     try:
         frank_date_obj = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
         min_date = date(1999, 1, 4)
-        max_date = datetime.now(timezone.utc).date() - timedelta(days=1) 
-
+        max_date = datetime.now(timezone.utc).date() - timedelta(days=1)
         if not (min_date <= frank_date_obj <= max_date):
             return jsonify({"error": f"Data trebuie să fie între {min_date.strftime('%Y-%m-%d')} și {max_date.strftime('%Y-%m-%d')}.", "data_source": "user_error"}), 400
     except ValueError:
         return jsonify({"error": "Format dată invalid. Folosește YYYY-MM-DD.", "data_source": "user_error"}), 400
 
-    # --- ADAUGAT: Verifică întâi în BD pentru datele Frankfurter ---
     print(f"Se caută rate în BD pentru data: {frank_date_obj}, moneda de bază: {base_currency_frankfurter}, sursa: {SOURCE_FRANKFURTER_APP}")
     rates_from_db = get_rates_from_db(frank_date_obj, base_currency_frankfurter, SOURCE_FRANKFURTER_APP)
     
     if rates_from_db:
-        print(f"Rate ({SOURCE_FRANKFURTER_APP}) găsite în BD pentru {frank_date_obj}. Se returnează din BD.")
-        data_to_return = rates_from_db
-        data_to_return['data_source'] = f"baza de date (cache local - {SOURCE_FRANKFURTER_APP})"
-        return jsonify(data_to_return)
-    # --- SFÂRȘIT BLOC VERIFICARE BD ---
+        print(f"Rate ({SOURCE_FRANKFURTER_APP}) găsite în BD pentru {frank_date_obj} și baza {base_currency_frankfurter}. Se returnează din BD.")
+        rates_from_db['data_source'] = f"baza de date (cache local - {SOURCE_FRANKFURTER_APP})"
+        return jsonify(rates_from_db)
 
-    print(f"Ratele pentru {frank_date_obj} ({SOURCE_FRANKFURTER_APP}) nu sunt în BD. Se apelează API-ul extern.")
+    print(f"Ratele pentru {frank_date_obj} ({SOURCE_FRANKFURTER_APP}, base: {base_currency_frankfurter}) nu sunt în BD. Se apelează API-ul extern.")
     api_url = f"https://api.frankfurter.app/{selected_date_str}?base={base_currency_frankfurter}"
     print(f"Se apelează Frankfurter API: {api_url}")
 
@@ -251,38 +264,44 @@ def get_frankfurter_historical_rates_route():
         response.raise_for_status()
         frank_data = response.json()
 
-        # Construim un câmp "last_update" și un string pentru source_last_update_utc pentru BD
-        hist_dt_aware = datetime(frank_date_obj.year, frank_date_obj.month, frank_date_obj.day, 0, 0, 0, tzinfo=timezone.utc)
-        base_time_str = hist_dt_aware.strftime('%a, %d %b %Y %H:%M:%S')
-        formatted_offset_str = "+00:00" 
-        last_update_for_frontend_and_db = f"{base_time_str} {formatted_offset_str}"
-        
-        # Extragem datele necesare pentru inserare și răspuns
         base_c = frank_data.get("base")
         conversion_r = frank_data.get("rates")
+        # frank_api_date_str este data efectivă a cursurilor returnate de Frankfurter (ex: "2025-05-02")
+        frank_api_date_str = frank_data.get("date") 
 
-        # --- ADAUGAT: Inserează datele Frankfurter în BD ---
-        if base_c and conversion_r: # Verificăm dacă avem date valide de la API
-            insert_rates_into_db(base_c, conversion_r, frank_date_obj, last_update_for_frontend_and_db, SOURCE_FRANKFURTER_APP)
+        # Construim un timestamp string standardizat pentru DB și frontend
+        # Folosim frank_date_obj care este data validată a requestului, la ora 00:00:00 UTC
+        hist_dt_for_timestamp = datetime(frank_date_obj.year, frank_date_obj.month, frank_date_obj.day, 0, 0, 0, tzinfo=timezone.utc)
+        
+        # Format pentru DB (compatibil cu parse_api_datetime_to_db_format, care așteaptă %z ca +HHMM)
+        # strftime %z produce +HHMM (ex: +0000 pentru UTC)
+        db_timestamp_str = hist_dt_for_timestamp.strftime('%a, %d %b %Y %H:%M:%S %z') 
+        
+        # Format pentru Frontend (cu ':' în offset, pentru consistență vizuală)
+        frontend_display_last_update = hist_dt_for_timestamp.strftime('%a, %d %b %Y %H:%M:%S') + " +00:00"
+        
+        if base_c and conversion_r and frank_api_date_str:
+            # Stocăm datele sub data cerută de utilizator (frank_date_obj)
+            # Indiferent dacă frank_api_date_str (data reală a cursurilor de la API) diferă (ex: weekend)
+            # Transparența este asigurată în `data_source` trimis la frontend.
+            print(f"Se pregătește inserarea pentru data solicitată {frank_date_obj} (API a returnat pentru {frank_api_date_str}).")
+            insert_rates_into_db(base_c, conversion_r, frank_date_obj, db_timestamp_str, SOURCE_FRANKFURTER_APP)
         else:
             print(f"Răspuns incomplet de la Frankfurter API pentru {selected_date_str}. Nu se inserează în BD.")
-        # --- SFÂRȘIT BLOC INSERARE BD ---
+            if not (base_c and conversion_r): # Dacă datele critice lipsesc, returnăm eroare
+                 return jsonify({"error": "Răspuns incomplet de la Frankfurter API.", "data_source": "frankfurter_api_error"}), 500
         
-        data_to_return = {
+        return jsonify({
             "base_code": base_c,
             "rates": conversion_r,
-            "last_update": last_update_for_frontend_and_db,
-            "data_source": f"{SOURCE_FRANKFURTER_APP} ({frank_data.get('date')}, extern)"
-        }
-        return jsonify(data_to_return)
-
+            "last_update": frontend_display_last_update, 
+            "data_source": f"{SOURCE_FRANKFURTER_APP} (cursuri din {frank_api_date_str}, cerute pentru {selected_date_str})"
+        })
     except requests.exceptions.HTTPError as http_err:
-        print(f"Eroare HTTP (Frankfurter): {http_err}")
         error_details = None
-        try:
-            error_details = response.json()
-        except ValueError:
-            pass 
+        try: error_details = response.json()
+        except ValueError: pass 
+        print(f"Eroare HTTP (Frankfurter): {http_err}")
         return jsonify({"error": f"Eroare HTTP de la Frankfurter: {http_err.response.status_code if http_err.response else 'N/A'}", "details": error_details, "url_called": api_url, "data_source": "frankfurter_api_error"}), 500
     except requests.exceptions.RequestException as req_err:
         print(f"Eroare Request (Frankfurter): {req_err}")

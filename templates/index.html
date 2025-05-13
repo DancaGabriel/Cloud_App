@@ -1,22 +1,35 @@
-<!DOCTYPE html>
-<html lang="ro">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Convertor Valutar Inteligent</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Rate de Schimb - Convertor Valutar{% endblock %}
+
+{% block page_content %}
     <header class="page-header">
         <h1>Convertor Valutar Inteligent</h1>
         <p class="subtitle">Obține ratele de schimb curente și istorice, rapid și eficient.</p>
     </header>
 
+    <section class="base-currency-selector-section card">
+        <h2>Selectează Moneda de Bază</h2>
+        <div class="currency-selector-controls">
+            <label for="baseCurrencySelect">Moneda:</label>
+            <select id="baseCurrencySelect" name="baseCurrency">
+                <option value="USD" selected>USD - Dolar American</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - Liră Sterlină</option>
+                <option value="RON">RON - Leu Românesc</option>
+                <option value="JPY">JPY - Yen Japonez</option>
+                <option value="CAD">CAD - Dolar Canadian</option>
+                <option value="AUD">AUD - Dolar Australian</option>
+                <option value="CHF">CHF - Franc Elvețian</option>
+            </select>
+        </div>
+        <p class="section-description small-text">Moneda selectată aici va fi folosită ca bază pentru ambele secțiuni de mai jos.</p>
+    </section>
+
     <main class="content-wrapper">
         <section id="currentRatesSection" class="rate-section card">
             <h2>Rate Curente (ExchangeRate-API)</h2>
-            <p class="section-description">Ultimele rate de schimb pentru USD, actualizate zilnic. Datele pot fi din cache-ul local sau direct de la API.</p>
+            <p class="section-description">Ultimele rate de schimb, actualizate zilnic. Datele pot fi din cache-ul local sau direct de la API.</p>
             <button id="fetchCurrentRatesBtn" class="action-button">Actualizează Ratele Curente</button>
             <div id="currentRatesContainer" class="rates-display-box">
                 <p class="placeholder">Apasă butonul pentru a vedea ratele curente...</p>
@@ -25,7 +38,7 @@
 
         <section id="historicalRatesFrankfurterSection" class="rate-section card">
             <h2>Curs Istoric (Frankfurter.app - BCE)</h2>
-            <p class="section-description">Cursul USD pentru o dată specifică (04 Ian 1999 - ieri), via Frankfurter.app (date de la Banca Centrală Europeană).</p>
+            <p class="section-description">Cursul pentru o dată specifică (04 Ian 1999 - ieri), via Frankfurter.app (date de la Banca Centrală Europeană).</p>
             <div class="date-selector-container">
                 <label for="frankfurterDateInput">Data:</label>
                 <input type="date" id="frankfurterDateInput" name="frankfurterDate">
@@ -36,11 +49,8 @@
             </div>
         </section>
     </main>
-    
-    <footer class="page-footer">
-        <p>&copy; {{ year }} Aplicația de Curs Valutar. Creat cu Flask și ❤️.</p>
-    </footer>
+{% endblock %}
 
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
-</html>
+{% block page_scripts %}
+    <!-- <script src="{{ url_for('static', filename='js/script.js') }}"></script> -->
+{% endblock %}
