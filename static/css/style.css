@@ -1,24 +1,138 @@
 /* Stil simplu pentru a demonstra că CSS-ul funcționează */
 body {
-    font-family: sans-serif;
-    background-color: #f0f0f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Font modern */
+    background-color: #f4f7f6; /* Fundal deschis, neutru */
+    color: #333; /* Culoare text principală */
     display: flex; /* Folosim flexbox pentru centrare */
     justify-content: center;
     align-items: center;
     flex-direction: column; /* Aliniază elementele pe verticală */
     min-height: 100vh; /* Asigură că body ocupă cel puțin înălțimea ecranului */
     margin: 0;
+    padding: 20px; /* Adaugă padding în jurul conținutului */
+    box-sizing: border-box; /* Include padding și border în dimensiunile elementului */
 }
 
 h1 {
-    color: #dc3545; /* Roșu (Bootstrap danger color) - să schimbăm puțin :) */
+    color: #0056b3; /* Albastru închis, profesional */
     text-align: center;
-    border-bottom: 2px solid #dc3545;
-    padding-bottom: 10px;
-    margin-bottom: 10px; /* Adaugă spațiu sub h1 */
+    border-bottom: 3px solid #0056b3;
+    padding-bottom: 15px;
+    margin-bottom: 20px; /* Spațiu mai mare sub h1 */
+    font-size: 2.5em; /* Mărime font mai mare */
 }
 
 p {
     text-align: center;
     color: #555;
+    line-height: 1.6; /* Spațiere între linii îmbunătățită */
+    max-width: 600px; /* Limitează lățimea paragrafului pentru lizibilitate */
+}
+
+#fetchRatesBtn {
+    background-color: #007bff; /* Albastru primar (Bootstrap) */
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 15px;
+    margin-bottom: 25px; /* Spațiu sub buton */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#fetchRatesBtn:hover {
+    background-color: #0056b3; /* Albastru mai închis la hover */
+    transform: translateY(-2px); /* Efect subtil de ridicare */
+}
+
+#fetchRatesBtn:active {
+    transform: translateY(0); /* Apasă butonul */
+}
+
+
+#ratesContainer {
+    background-color: #ffffff; /* Fundal alb pentru containerul de rezultate */
+    border: 1px solid #ddd; /* Chenar subtil */
+    border-radius: 8px; /* Colțuri rotunjite */
+    padding: 20px;
+    margin-top: 20px;
+    width: 90%; /* Lățime container */
+    max-width: 500px; /* Lățime maximă */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Umbră subtilă */
+    text-align: left; /* Aliniază textul la stânga în interiorul containerului */
+}
+
+#ratesContainer h2 {
+    color: #007bff; /* Albastru pentru titlul ratelor */
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+}
+
+#ratesContainer ul {
+    list-style-type: none; /* Elimină bulinele */
+    padding-left: 0;
+}
+
+#ratesContainer li {
+    padding: 8px 0;
+    border-bottom: 1px dashed #eee; /* Linie de separare între rate */
+    font-size: 0.95em;
+    color: #444;
+}
+
+#ratesContainer li:last-child {
+    border-bottom: none; /* Elimină linia pentru ultimul element */
+}
+
+#ratesContainer .placeholder,
+#ratesContainer .loading {
+    text-align: center;
+    color: #777;
+    font-style: italic;
+    padding: 20px;
+}
+
+#ratesContainer .error {
+    color: #dc3545; /* Roșu pentru erori */
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #f5c6cb;
+    background-color: #f8d7da;
+    border-radius: 5px;
+}
+#ratesContainer .error-detail {
+    color: #721c24;
+    font-size: 0.9em;
+    margin-top: 5px;
+    text-align: center;
+}
+
+
+#ratesContainer .update-time {
+    font-size: 0.8em;
+    color: #6c757d; /* Gri text (Bootstrap secondary) */
+    text-align: right;
+    margin-bottom: 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 2em;
+    }
+    #ratesContainer {
+        width: 100%;
+        padding: 15px;
+    }
+    #fetchRatesBtn {
+        padding: 10px 20px;
+        font-size: 0.95em;
+    }
 }

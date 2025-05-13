@@ -19,12 +19,15 @@ pipeline {
         }
 
         stage('Run Tests') {
+            environment {
+                    EXCHANGE_RATE_API_KEY = "dummy-key-pentru-jenkins-test"
+                }
             steps {
                 echo "Pregătire mediu și instalare dependențe pentru testare..."
                 sh 'pip install -r requirements.txt' 
                 
-                echo "Rulare teste automate..."
-                sh 'pytest' 
+                echo "INFO Jenkins: Variabila de mediu EXCHANGE_RATE_API_KEY este '${env.EXCHANGE_RATE_API_KEY}'"
+                sh 'pytest -v' 
                 echo "Testele au trecut cu succes."
             }
         }
