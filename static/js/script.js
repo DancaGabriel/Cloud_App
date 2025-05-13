@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // ... (codul pentru meniul hamburger - rămâne la fel ca în varianta funcțională) ...
     const hamburgerMenuIcon = document.getElementById('hamburgerMenuIcon');
     const mobileDropdownMenu = document.getElementById('mobileDropdownMenu');
 
@@ -30,11 +31,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- Codul pentru ratele de schimb ---
     const currentRatesBtn = document.getElementById('fetchCurrentRatesBtn');
     const currentRatesContainer = document.getElementById('currentRatesContainer');
+    
     const frankfurterBtn = document.getElementById('fetchFrankfurterBtn');
     const frankfurterDateInput = document.getElementById('frankfurterDateInput');
     const frankfurterRatesContainer = document.getElementById('frankfurterRatesContainer');
+
     const baseCurrencySelect = document.getElementById('baseCurrencySelect');
     let currentSelectedBaseCurrency = 'USD'; 
 
@@ -112,16 +116,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- ÎNCEPE BLOCUL CORECTAT PENTRU FRANKFURTER ---
     if (frankfurterBtn) {
         const todayJS = new Date();
         const yesterdayJS = new Date(todayJS);
         yesterdayJS.setDate(todayJS.getDate() - 1);
         
-        constइस्लामाबाद = yesterdayJS.getFullYear();
+        // CORECTURĂ AICI: Numele variabilei a fost corectat din 'constइस्लामाबाद' în 'const yyyy'
+        const yyyy = yesterdayJS.getFullYear(); 
         const mm = String(yesterdayJS.getMonth() + 1).padStart(2, '0');
         const dd = String(yesterdayJS.getDate()).padStart(2, '0');
         
-        const maxDateString = `${yyyy}-${mm}-${dd}`;
+        // Acum 'yyyy' este definit corect și poate fi folosit mai jos
+        const maxDateString = `${yyyy}-${mm}-${dd}`; 
         const minDateString = "1999-01-04";
 
         if (frankfurterDateInput) {
@@ -139,9 +146,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const selectedDateParts = selectedDateStr.split('-').map(Number);
             const selectedDateObj = new Date(Date.UTC(selectedDateParts[0], selectedDateParts[1] - 1, selectedDateParts[2]));
+
             const minDateParts = minDateString.split('-').map(Number);
             const minDateObj = new Date(Date.UTC(minDateParts[0], minDateParts[1] - 1, minDateParts[2]));
-            const maxDateParts = maxDateString.split('-').map(Number);
+            
+            const maxDateParts = maxDateString.split('-').map(Number); // Folosește maxDateString care utilizează yyyy, mm, dd corecte
             const maxDateObj = new Date(Date.UTC(maxDateParts[0], maxDateParts[1] - 1, maxDateParts[2]));
             
             if (selectedDateObj < minDateObj || selectedDateObj > maxDateObj) {
