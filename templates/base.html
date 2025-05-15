@@ -14,12 +14,31 @@
 
     <nav id="mobileDropdownMenu" class="mobile-dropdown-menu" aria-hidden="true">
         <ul>
-            <li><a href="{{ url_for('hello_world') }}">Home (Rate Curente & Istorice)</a></li>
+            <li><a href="{{ url_for('hello_world') }}">Home (Rate)</a></li>
             <li><a href="{{ url_for('visualize_page') }}">Vizualizare Date</a></li>
+            <hr class="menu-divider">
+            {% if current_user.is_authenticated %}
+                <li><a href="#">Salut, {{ current_user.username }}!</a></li>
+                <li><a href="{{ url_for('logout_route') }}">Deconectare</a></li>
+            {% else %}
+                <li><a href="{{ url_for('login_route') }}">Autentificare</a></li>
+                <li><a href="{{ url_for('register_route') }}">Înregistrare</a></li>
+            {% endif %}
         </ul>
     </nav>
 
     <div class="page-content-wrapper">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         {% block page_content %}{% endblock %}
     </div>
     

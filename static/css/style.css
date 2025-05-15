@@ -423,3 +423,134 @@ body {
         gap: 4px;
     }
 }
+
+/* ... (tot CSS-ul tău existent rămâne aici) ... */
+
+/* Stiluri pentru formularele de autentificare */
+.content-wrapper-single-form { /* Un wrapper pentru paginile cu un singur formular central */
+    width: 100%;
+    max-width: 550px; /* Lățime potrivită pentru formulare */
+    margin: 20px auto 40px auto; /* Spațiere și centrare */
+}
+
+.form-section.card {
+    padding: 30px 35px; /* Padding mai generos pentru formulare */
+}
+
+.form-section legend {
+    font-size: 1.3em;
+    font-weight: 500;
+    color: #0056b3;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.form-group {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.form-field {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.95em;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    outline: none;
+}
+
+.form-input-invalid {
+    border-color: #dc3545; /* Roșu pentru erori */
+}
+
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.8em;
+    margin-top: 4px;
+}
+.invalid-feedback span {
+    display: block;
+}
+
+.auth-button { /* Buton specific pentru formularele de autentificare */
+    width: 100%;
+    padding: 12px; /* Puțin mai înalt */
+    font-size: 1.05em;
+}
+
+.auth-links {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.9em;
+}
+
+.auth-links a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+/* Stiluri pentru Mesaje Flash */
+.flash-messages-container {
+    width: 100%;
+    max-width: 1100px; /* Aliniat cu header-ul și footer-ul */
+    margin: 0 auto 20px auto; /* Spațiu sub mesaje */
+    padding: 0 20px; /* Padding lateral dacă e necesar */
+}
+.alert {
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 0.95em;
+    text-align: center;
+}
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+/* Separator în meniu */
+.menu-divider {
+    border: none;
+    border-top: 1px solid #4a627f; /* Culoare similară cu border-bottom al itemilor */
+    margin: 8px 0; /* Spațiere verticală */
+}

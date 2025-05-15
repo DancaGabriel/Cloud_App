@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Autentificare{% endblock %}
+
+{% block page_content %}
+<header class="page-header">
+    <h1>Autentificare Utilizator</h1>
+</header>
+<main class="content-wrapper-single-form">
+    <section class="form-section card">
+        <form method="POST" action="{{ url_for('login_route') }}" novalidate>
+            {{ form.hidden_tag() }} <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Intră în Cont</legend>
+                <div class="form-field">
+                    {{ form.username.label(class="form-label") }}
+                    {% if form.username.errors %}
+                        {{ form.username(class="form-input form-input-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.username.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.username(class="form-input") }}
+                    {% endif %}
+                </div>
+                <div class="form-field">
+                    {{ form.password.label(class="form-label") }}
+                    {% if form.password.errors %}
+                        {{ form.password(class="form-input form-input-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.password.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.password(class="form-input") }}
+                    {% endif %}
+                </div>
+                </fieldset>
+            <div class="form-field">
+                {{ form.submit(class="action-button auth-button") }}
+            </div>
+        </form>
+        <div class="auth-links">
+            Nu ai cont? <a href="{{ url_for('register_route') }}">Înregistrează-te</a>
+        </div>
+    </section>
+</main>
+{% endblock %}
