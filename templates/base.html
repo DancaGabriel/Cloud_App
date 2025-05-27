@@ -20,6 +20,7 @@
             {% if current_user.is_authenticated %}
                 <li><a href="#">Salut, {{ current_user.username }}!</a></li>
                 <li><a href="{{ url_for('logout_route') }}">Deconectare</a></li>
+                <li><a href="{{ url_for('stocks_page') }}">Portofoliu Acțiuni</a></li>
             {% else %}
                 <li><a href="{{ url_for('login_route') }}">Autentificare</a></li>
                 <li><a href="{{ url_for('register_route') }}">Înregistrare</a></li>
@@ -48,6 +49,7 @@
 
     {% block base_scripts %}
         <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% endblock %}
     {% block page_scripts %}{% endblock %}
 </body>
