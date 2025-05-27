@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Portofoliu Acțiuni{% endblock %}
+
+{% block page_content %}
+<header class="page-header">
+    <h1>Portofoliul Meu de Acțiuni</h1>
+    <p class="subtitle">Vezi, adaugă și urmărește performanța acțiunilor tale.</p>
+</header>
+
+<main class="content-wrapper-single-form">
+    <section class="form-section card">
+        <form method="POST" action="{{ url_for('stocks_page') }}">
+            <fieldset class="form-group">
+                <legend>Adaugă o Acțiune</legend>
+
+                <div class="form-field">
+                    <label for="symbol" class="form-label">Simbol bursier (ex: AAPL)</label>
+                    <input type="text" name="symbol" id="symbol" class="form-input" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="buy_price" class="form-label">Preț Cumpărare</label>
+                    <input type="number" step="0.01" name="buy_price" id="buy_price" class="form-input" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="quantity" class="form-label">Cantitate</label>
+                    <input type="number" name="quantity" id="quantity" class="form-input" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="buy_date" class="form-label">Data Cumpărării</label>
+                    <input type="date" name="buy_date" id="buy_date" class="form-input" required pattern="\d{2}/\d{2}/\d{4}" placeholder="zz/ll/aaaa">
+                </div>
+
+                <div class="form-field">
+                    <button type="submit" class="action-button auth-button">Adaugă în Portofoliu</button>
+                </div>
+            </fieldset>
+        </form>
+    </section>
+
+    <section class="table-section card">
+        <h2>📊 Acțiuni în Portofoliu</h2>
+        {% if stocks %}
+        <table class="styled-table classic-stock-table">
+            <thead>
+                <tr>
+                    <th>Simbol</th>
+                    <th>Cantitate</th>
+                    <th>Preț Cumpărare</th>
+                    <th>Preț Actual</th>
+                    <th>% Win/Loss</th>
+                    <th>Acțiune</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock in stocks %}
+                <tr>
+                    <td><strong>{{ stock.symbol }}</strong></td>
+                    <td>{{ stock.quantity }}</td>
+                    <td>${{ '%.2f'|format(stock.buy_price) }}</td>
+                    <td>
+                        {% if stock.current_price != 'Eroare' %}
+                            ${{ '%.2f'|format(stock.current_price) }}
+                        {% else %}
+                            <span class="text-danger">Eroare</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if stock.win_loss is not none %}
+                            <span class="{{ 'text-success' if stock.win_loss >= 0 else 'text-danger' }}">
+                                {{ '%.2f'|format(stock.win_loss) }}%
+                            </span>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('delete_stock', stock_id=stock.id) }}" onsubmit="return confirm('Sigur vrei să ștergi această acțiune?');">
+                            <button type="submit" class="action-button danger">Șterge</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6">
+                        <canvas id="chart-{{ stock.symbol }}" height="100"></canvas>
+                    </td>
+                </tr>
+                <script>
+                fetch("/stock-history/{{ stock.symbol }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        const ctx = document.getElementById('chart-{{ stock.symbol }}').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.dates,
+                                datasets: [{
+                                    label: '{{ stock.symbol }} - Preț Istoric',
+                                    data: data.prices,
+                                    borderWidth: 2,
+                                    fill: true,
+                                    pointRadius: 2,
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                                    tension: 0.2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false }
+                                },
+                                scales: {
+                                    x: {
+                                        title: { display: true, text: 'Dată' },
+                                        ticks: { maxRotation: 45, minRotation: 45 }
+                                    },
+                                    y: {
+                                        title: { display: true, text: 'Preț USD' },
+                                        beginAtZero: false
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Eroare grafic:', error);
+                    });
+                </script>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Nu ai adăugat încă nicio acțiune.</p>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

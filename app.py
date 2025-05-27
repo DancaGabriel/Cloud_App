@@ -2,6 +2,8 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, f
 from dotenv import load_dotenv
 import os
 import requests
+import pandas as pd
+import yfinance as yf
 import mysql.connector
 from datetime import datetime, date, timezone, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -14,11 +16,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# CHEIE SECRETA - ESENȚIALĂ PENTRU SESIUNI ȘI FORMULARE CSRF
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'o_cheie_secreta_foarte_puternica_si_unica_aici')
-if app.config['SECRET_KEY'] == 'o_cheie_secreta_foarte_puternica_si_unica_aici' and os.getenv('FLASK_ENV', 'development') != 'development':
-    print("ALERTA MARE DE SECURITATE: FLASK_SECRET_KEY nu este setată cu o valoare unică și sigură într-un mediu de producție!")
-
 
 EXCHANGE_RATE_API_KEY = os.getenv('EXCHANGE_RATE_API_KEY')
 DB_HOST = os.getenv('DB_HOST')
@@ -26,23 +24,15 @@ DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
 
-if not EXCHANGE_RATE_API_KEY:
-    print("ALERTA: Variabila de mediu EXCHANGE_RATE_API_KEY nu este setată!")
-if not all([DB_HOST, DB_USER, DB_PASSWORD, DB_NAME]):
-    print("ALERTA: Una sau mai multe variabile de mediu pentru baza de date nu sunt setate (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)!")
-
 SOURCE_EXCHANGERATE_API = "ExchangeRateAPI.com"
 SOURCE_FRANKFURTER_APP = "Frankfurter.app"
 
-# Inițializare Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login_route' 
+login_manager.login_view = 'login_route'
 login_manager.login_message = "Te rog să te autentifici pentru a accesa această pagină."
 login_manager.login_message_category = "info"
 
-
-# --- Modelul User ---
 class User(UserMixin):
     def __init__(self, id, username, email, password_hash=None):
         self.id = id
@@ -62,9 +52,15 @@ class User(UserMixin):
         except mysql.connector.Error as err:
             print(f"Eroare la preluarea utilizatorului (id: {user_id}) din BD: {err}")
         finally:
-            if conn and conn.is_connected(): cursor.close(); conn.close()
+            if conn and conn.is_connected():
+                cursor.close()
+                conn.close()
         if user_data_dict:
-            return User(id=user_data_dict['id'], username=user_data_dict['username'], email=user_data_dict['email'])
+            return User(
+                id=user_data_dict['id'],
+                username=user_data_dict['username'],
+                email=user_data_dict['email']
+            )
         return None
 
     @staticmethod
@@ -83,24 +79,21 @@ class User(UserMixin):
         if user_data_dict:
             return User(id=user_data_dict['id'], username=user_data_dict['username'], email=user_data_dict['email'], password_hash=user_data_dict['password_hash'])
         return None
-    
+
     @staticmethod
-    def find_by_email(email_address): # Renamed parameter for clarity
+    def find_by_email(email_address):
         conn = get_db_connection()
         if not conn: return None
         cursor = conn.cursor(dictionary=True)
         user_data_dict = None
         try:
             cursor.execute("SELECT id FROM users WHERE email = %s", (email_address,))
-            user_data_dict = cursor.fetchone() # Only need to know if it exists
+            user_data_dict = cursor.fetchone()
         except mysql.connector.Error as err:
             print(f"Eroare la căutarea emailului {email_address} în BD: {err}")
         finally:
             if conn and conn.is_connected(): cursor.close(); conn.close()
-        if user_data_dict: # If fetchone found something, email exists
-            return True # Simpler to just return True/False for validation
-        return False
-
+        return bool(user_data_dict)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -139,6 +132,33 @@ def get_db_connection():
     except mysql.connector.Error as err:
         print(f"Eroare CRITICĂ la conectarea la MySQL: {err}")
         return None
+
+def create_user_stocks_table_if_not_exists():
+    conn = get_db_connection()
+    if not conn:
+        print("❌ Conexiunea la baza de date a eșuat.")
+        return
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_stocks (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                symbol VARCHAR(10) NOT NULL,
+                buy_price DECIMAL(10, 2) NOT NULL,
+                quantity INT NOT NULL,
+                buy_date DATE NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            );
+        """)
+        conn.commit()
+        print("✅ Tabela `user_stocks` a fost creată sau exista deja.")
+    except mysql.connector.Error as err:
+        print(f"❌ Eroare la crearea tabelei `user_stocks`: {err}")
+    finally:
+        cursor.close()
+        conn.close()
 
 def parse_api_datetime_to_db_format(api_datetime_str):
     formats_to_try = ['%a, %d %b %Y %H:%M:%S %z']
@@ -215,6 +235,21 @@ def insert_rates_into_db(base_code, rates_dict, effective_date_obj, source_last_
             cursor.close()
             conn.close()
     return success
+
+def get_current_stock_price(symbol):
+    api_key = os.getenv('FINNHUB_API_KEY')
+    if not api_key:
+        print("❌ FINNHUB_API_KEY lipsă în .env")
+        return None
+    url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={api_key}"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        return data.get("c")  # prețul curent (current price)
+    except Exception as e:
+        print(f"❌ Eroare Finnhub pentru {symbol}: {e}")
+        return None
 
 # --- Rute Flask ---
 @app.route('/')
@@ -370,6 +405,125 @@ def get_frankfurter_historical_rates_route():
         print(f"Eroare decodare JSON (Frankfurter): {json_err}")
         return jsonify({"error": f"Eroare la decodarea răspunsului JSON de la Frankfurter: {json_err}", "data_source": "frankfurter_request_error"}), 500
 
+@app.route('/stocks', methods=['GET', 'POST'])
+@login_required
+def stocks_page():
+    conn = get_db_connection()
+    if request.method == 'POST':
+        symbol = request.form['symbol'].upper()
+        price = float(request.form['buy_price'])
+        quantity = int(request.form['quantity'])
+        buy_date = request.form['buy_date']
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO user_stocks (user_id, symbol, buy_price, quantity, buy_date)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (current_user.id, symbol, price, quantity, buy_date))
+            conn.commit()
+            flash(f"Acțiunea {symbol} a fost adăugată!", "success")
+        except mysql.connector.Error as err:
+            conn.rollback()
+            print(f"Eroare BD: {err}")
+            flash("Eroare la salvarea acțiunii.", "danger")
+        finally:
+            cursor.close()
+
+    # Acțiuni salvate de utilizator
+    user_stocks = []
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM user_stocks WHERE user_id = %s ORDER BY buy_date DESC", (current_user.id,))
+        rows = cursor.fetchall()
+        for row in rows:
+            current_price = get_current_stock_price(row['symbol'])
+            buy_price = float(row['buy_price'])  # convertim decimal → float
+            if current_price is not None:
+                win_loss = ((current_price - buy_price) / buy_price) * 100
+            else:
+                current_price = "Eroare"
+                win_loss = None
+            user_stocks.append({
+                "id": row['id'],  # <-- Adăugăm ID-ul pentru delete
+                "symbol": row['symbol'],
+                "quantity": row['quantity'],
+                "buy_price": buy_price,
+                "buy_date": row['buy_date'],
+                "current_price": current_price,
+                "win_loss": win_loss
+            })
+    except mysql.connector.Error as err:
+        print(f"Eroare la citirea acțiunilor: {err}")
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()
+
+    return render_template('stocks.html', year=datetime.now().year, stocks=user_stocks)
+
+@app.route('/delete-stock/<int:stock_id>', methods=['POST'])
+@login_required
+def delete_stock(stock_id):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        # Asigurăm că ștergem doar acțiunea utilizatorului curent
+        cursor.execute("DELETE FROM user_stocks WHERE id = %s AND user_id = %s", (stock_id, current_user.id))
+        conn.commit()
+        flash("Acțiunea a fost ștearsă cu succes.", "info")
+    except mysql.connector.Error as err:
+        print(f"Eroare la ștergerea acțiunii: {err}")
+        flash("Eroare la ștergerea acțiunii.", "danger")
+    finally:
+        cursor.close()
+        conn.close()
+    return redirect(url_for('stocks_page'))
+
+@app.route("/stock-history/<symbol>")
+@login_required
+def stock_history(symbol):
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Conexiunea la BD a eșuat"}), 500
+
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT MIN(buy_date) AS start_date FROM user_stocks
+            WHERE user_id = %s AND symbol = %s
+        """, (current_user.id, symbol))
+        row = cursor.fetchone()
+        from_date = row['start_date'] if row and row['start_date'] else None
+    except mysql.connector.Error as err:
+        print(f"Eroare BD: {err}")
+        return jsonify({"error": "Eroare BD"}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+    # fallback: 30 zile
+    if not from_date:
+        from_date = datetime.now() - timedelta(days=30)
+
+    try:
+        df = yf.download(symbol, start=from_date.strftime('%Y-%m-%d'), end=datetime.now().strftime('%Y-%m-%d'))
+        if df.empty or 'Close' not in df.columns:
+            return jsonify({"error": "Date istorice indisponibile sau lipsesc coloane."}), 404
+
+        dates = df.index.to_series().dt.strftime('%Y-%m-%d').tolist()
+        close_column = df['Close'].squeeze()  # evită DataFrame dublu coloană
+
+        if isinstance(close_column, pd.Series):
+            prices = close_column.round(2).tolist()
+            return jsonify({"dates": dates, "prices": prices})
+        else:
+            print("⚠️ Atenție: df['Close'] nu e Series, ci:", type(close_column))
+            return jsonify({"error": "Format invalid pentru coloana 'Close'"}), 500
+
+    except Exception as e:
+        print(f"Eroare la yfinance: {e}")
+        return jsonify({"error": "Eroare la preluarea datelor din yfinance"}), 500
 
 if __name__ == '__main__':
+    create_user_stocks_table_if_not_exists()
     app.run(port=5000, debug=True)
