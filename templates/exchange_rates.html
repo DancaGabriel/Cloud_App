@@ -29,7 +29,7 @@ Historical{% endblock %} {% block page_content %}
   </p>
 </section>
 
-<main class="content-wrapper">
+<main class="content-wrapper exchange-rates-page">
   <section id="currentRatesSection" class="rate-section card">
     <h2>Current Rates (ExchangeRate-API)</h2>
     <p class="section-description">
@@ -45,6 +45,116 @@ Historical{% endblock %} {% block page_content %}
     <div id="currentRatesContainer" class="rates-display-box">
       <p class="placeholder">Click the button to view current rates...</p>
     </div>
+  </section>
+
+  <section id="advancedConverterSection" class="rate-section card">
+    <h2>Advanced Currency Converter</h2>
+    <p class="section-description">
+      Calculate any amount between currencies, directly or via RON, with full
+      transparency on the rates and hidden costs. The converter will always show
+      you the best path and the real rate used.
+    </p>
+    <form
+      id="advancedConverterForm"
+      class="currency-selector-controls"
+      style="flex-wrap: wrap; gap: 12px"
+    >
+      <input
+        type="number"
+        id="convAmount"
+        name="amount"
+        class="form-input"
+        placeholder="Amount"
+        min="0"
+        step="any"
+        required
+        style="max-width: 120px"
+      />
+      <select id="convFrom" name="from" class="form-input">
+        <option value="EUR">EUR</option>
+        <option value="USD">USD</option>
+        <option value="RON">RON</option>
+        <option value="GBP">GBP</option>
+        <option value="JPY">JPY</option>
+        <option value="CAD">CAD</option>
+        <option value="AUD">AUD</option>
+        <option value="CHF">CHF</option>
+      </select>
+      <span style="align-self: center">→</span>
+      <select id="convTo" name="to" class="form-input">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="RON">RON</option>
+        <option value="GBP">GBP</option>
+        <option value="JPY">JPY</option>
+        <option value="CAD">CAD</option>
+        <option value="AUD">AUD</option>
+        <option value="CHF">CHF</option>
+      </select>
+      <button type="submit" class="action-button" style="min-width: 160px">
+        Convert
+      </button>
+    </form>
+    <div
+      id="advancedConverterResult"
+      class="rates-display-box"
+      style="margin-top: 12px"
+    ></div>
+  </section>
+
+  <section id="pathComparisonSection" class="rate-section card">
+    <h2>Currency Path Comparison</h2>
+    <p class="section-description">
+      See the difference between cash-desk conversion (EUR→RON→USD) and direct
+      online conversion. Make smarter decisions by comparing both paths and
+      their hidden costs.
+    </p>
+    <form
+      id="pathComparisonForm"
+      class="currency-selector-controls"
+      style="flex-wrap: wrap; gap: 12px"
+    >
+      <input
+        type="number"
+        id="cmpAmount"
+        name="amount"
+        class="form-input"
+        placeholder="Amount"
+        min="0"
+        step="any"
+        required
+        style="max-width: 120px"
+      />
+      <select id="cmpFrom" name="from" class="form-input">
+        <option value="EUR">EUR</option>
+        <option value="USD">USD</option>
+        <option value="RON">RON</option>
+        <option value="GBP">GBP</option>
+        <option value="JPY">JPY</option>
+        <option value="CAD">CAD</option>
+        <option value="AUD">AUD</option>
+        <option value="CHF">CHF</option>
+      </select>
+      <span style="align-self: center">→</span>
+      <select id="cmpTo" name="to" class="form-input">
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="RON">RON</option>
+        <option value="GBP">GBP</option>
+        <option value="JPY">JPY</option>
+        <option value="CAD">CAD</option>
+        <option value="AUD">AUD</option>
+        <option value="CHF">CHF</option>
+      </select>
+      <button type="submit" class="action-button" style="min-width: 160px">
+        Compare
+      </button>
+    </form>
+    <div
+      id="pathComparisonResult"
+      class="rates-display-box"
+      style="margin-top: 12px"
+    ></div>
   </section>
 
   <section id="historicalRatesFrankfurterSection" class="rate-section card">
@@ -69,5 +179,131 @@ Historical{% endblock %} {% block page_content %}
   </section>
 </main>
 {% endblock %} {% block page_scripts %}
-<!-- <script src="{{ url_for('static', filename='js/script.js') }}"></script> -->
+<script>
+  // --- Advanced Currency Converter Logic ---
+  async function fetchRates(base) {
+    const res = await fetch(`/get-exchange-rates?base=${base}`);
+    if (!res.ok) throw new Error('Failed to fetch rates for ' + base);
+    return await res.json();
+  }
+
+  document
+    .getElementById('advancedConverterForm')
+    .addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('convAmount').value);
+      const from = document.getElementById('convFrom').value;
+      const to = document.getElementById('convTo').value;
+      const resultBox = document.getElementById('advancedConverterResult');
+      resultBox.innerHTML = '<span class="loading">Calculating...</span>';
+      if (from === to) {
+        resultBox.innerHTML = `<b>Result:</b> ${amount} ${from} = ${amount} ${to} <br><span class='small-text'>No conversion needed.</span>`;
+        return;
+      }
+      try {
+        // Try direct conversion first
+        const ratesFrom = await fetchRates(from);
+        if (ratesFrom.rates && ratesFrom.rates[to]) {
+          const rate = ratesFrom.rates[to];
+          const converted = amount * rate;
+          resultBox.innerHTML = `<b>Result:</b> ${amount} ${from} = ${converted.toFixed(
+            4
+          )} ${to}<br><span class='small-text'>Direct conversion rate: 1 ${from} = ${rate} ${to} <br>Path: <b>${from} → ${to}</b></span>`;
+          return;
+        }
+        // If no direct, try via RON
+        if (from !== 'RON' && to !== 'RON') {
+          const ratesFromRON = await fetchRates(from);
+          const ratesToRON = await fetchRates('RON');
+          if (
+            ratesFromRON.rates &&
+            ratesFromRON.rates['RON'] &&
+            ratesToRON.rates &&
+            ratesToRON.rates[to]
+          ) {
+            const rate1 = ratesFromRON.rates['RON'];
+            const rate2 = ratesToRON.rates[to];
+            const converted = amount * rate1 * rate2;
+            resultBox.innerHTML = `<b>Result:</b> ${amount} ${from} = ${converted.toFixed(
+              4
+            )} ${to}<br><span class='small-text'>Path: ${from} → RON → ${to}<br>1 ${from} = ${rate1} RON, 1 RON = ${rate2} ${to}</span>`;
+            return;
+          }
+        }
+        resultBox.innerHTML = `<span class='error'>Conversion not available for this pair.</span>`;
+      } catch (err) {
+        resultBox.innerHTML = `<span class='error'>Error: ${err.message}</span>`;
+      }
+    });
+
+  // --- Currency Path Comparison Logic ---
+  document
+    .getElementById('pathComparisonForm')
+    .addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('cmpAmount').value);
+      const from = document.getElementById('cmpFrom').value;
+      const to = document.getElementById('cmpTo').value;
+      const resultBox = document.getElementById('pathComparisonResult');
+      resultBox.innerHTML = '<span class="loading">Calculating...</span>';
+      if (from === to) {
+        resultBox.innerHTML = `<b>Result:</b> ${amount} ${from} = ${amount} ${to} <br><span class='small-text'>No conversion needed.</span>`;
+        return;
+      }
+      try {
+        // Direct online path
+        const ratesFrom = await fetchRates(from);
+        let direct = null,
+          directRate = null;
+        if (ratesFrom.rates && ratesFrom.rates[to]) {
+          directRate = ratesFrom.rates[to];
+          direct = amount * directRate;
+        }
+        // Cash-desk path: from → RON → to
+        let cashPath = null,
+          rate1 = null,
+          rate2 = null;
+        if (from !== 'RON' && to !== 'RON') {
+          const ratesFromRON = await fetchRates(from);
+          const ratesToRON = await fetchRates('RON');
+          if (
+            ratesFromRON.rates &&
+            ratesFromRON.rates['RON'] &&
+            ratesToRON.rates &&
+            ratesToRON.rates[to]
+          ) {
+            rate1 = ratesFromRON.rates['RON'];
+            rate2 = ratesToRON.rates[to];
+            cashPath = amount * rate1 * rate2;
+          }
+        }
+        let html = '';
+        if (direct !== null) {
+          html += `<b>Direct online:</b> ${amount} ${from} = ${direct.toFixed(
+            4
+          )} ${to} <br><span class='small-text'>Rate: 1 ${from} = ${directRate} ${to} <br>Path: <b>${from} → ${to}</b></span><br>`;
+        } else {
+          html += `<b>Direct online:</b> <span class='error'>Not available</span><br>`;
+        }
+        if (cashPath !== null) {
+          html += `<b>Cash-desk path (via RON):</b> ${amount} ${from} = ${cashPath.toFixed(
+            4
+          )} ${to} <br><span class='small-text'>Path: ${from} → RON → ${to}<br>1 ${from} = ${rate1} RON, 1 RON = ${rate2} ${to}</span><br>`;
+        } else {
+          html += `<b>Cash-desk path (via RON):</b> <span class='error'>Not available</span><br>`;
+        }
+        if (direct !== null && cashPath !== null) {
+          const diff = direct - cashPath;
+          html += `<b>Difference:</b> <span class='${
+            diff >= 0 ? 'text-success' : 'text-danger'
+          }'>${diff.toFixed(4)} ${to} (${
+            diff >= 0 ? 'Direct online is better' : 'Cash-desk path is better'
+          })</span>`;
+        }
+        resultBox.innerHTML = html;
+      } catch (err) {
+        resultBox.innerHTML = `<span class='error'>Error: ${err.message}</span>`;
+      }
+    });
+</script>
 {% endblock %}
