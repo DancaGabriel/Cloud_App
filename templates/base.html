@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Convertor Valutar Inteligent{% endblock %}</title>
+    <title>{% block title %}Smart Currency Converter{% endblock %}</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
@@ -17,7 +17,7 @@
     <button
       id="hamburgerMenuIcon"
       class="hamburger-menu-button"
-      aria-label="Meniu Principal"
+      aria-label="Main Menu"
       aria-expanded="false"
       aria-controls="mobileDropdownMenu"
     >
@@ -30,16 +30,21 @@
       aria-hidden="true"
     >
       <ul>
-        <li><a href="{{ url_for('hello_world') }}">Home (Rate)</a></li>
-        <li><a href="{{ url_for('exchange_rates_page') }}">Curs Valutar</a></li>
-        <li><a href="{{ url_for('visualize_page') }}">Vizualizare Date</a></li>
+        <li><a href="{{ url_for('hello_world') }}">Home (Rates)</a></li>
+        <li>
+          <a href="{{ url_for('exchange_rates_page') }}">Exchange Rates</a>
+        </li>
+        <li>
+          <a href="{{ url_for('visualize_page') }}">Data Visualization</a>
+        </li>
         <hr class="menu-divider" />
         {% if current_user.is_authenticated %}
-        <li><a href="#">Salut, {{ current_user.username }}!</a></li>
-        <li><a href="{{ url_for('logout_route') }}">Deconectare</a></li>
+        <li><a href="#">Hello, {{ current_user.username }}!</a></li>
+        <li><a href="{{ url_for('logout_route') }}">Logout</a></li>
+        <li><a href="{{ url_for('stocks_page') }}">Stock Portfolio</a></li>
         {% else %}
-        <li><a href="{{ url_for('login_route') }}">Autentificare</a></li>
-        <li><a href="{{ url_for('register_route') }}">Înregistrare</a></li>
+        <li><a href="{{ url_for('login_route') }}">Login</a></li>
+        <li><a href="{{ url_for('register_route') }}">Register</a></li>
         {% endif %}
       </ul>
     </nav>
@@ -56,13 +61,12 @@
     </div>
 
     <footer class="page-footer">
-      <p>&copy; {{ year }} Aplicația de Curs Valutar. Creat cu Flask și ❤️.</p>
+      <p>&copy; {{ year }} Currency Exchange App. Built with Flask and ❤️.</p>
     </footer>
 
     {% block base_scripts %}
-        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    {% endblock %}
-    {% block page_scripts %}{% endblock %}
-</body>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% endblock %} {% block page_scripts %}{% endblock %}
+  </body>
 </html>

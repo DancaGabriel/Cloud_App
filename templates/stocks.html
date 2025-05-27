@@ -1,141 +1,197 @@
-{% extends "base.html" %}
-{% block title %}Portofoliu Acțiuni{% endblock %}
-
-{% block page_content %}
+{% extends "base.html" %} {% block title %}Stock Portfolio{% endblock %} {%
+block page_content %}
 <header class="page-header">
-    <h1>Portofoliul Meu de Acțiuni</h1>
-    <p class="subtitle">Vezi, adaugă și urmărește performanța acțiunilor tale.</p>
+  <h1>Stock Portfolio</h1>
+  <p class="subtitle">
+    Track your stock investments and performance in real time.
+  </p>
 </header>
 
 <main class="content-wrapper-single-form">
-    <section class="form-section card">
-        <form method="POST" action="{{ url_for('stocks_page') }}">
-            <fieldset class="form-group">
-                <legend>Adaugă o Acțiune</legend>
+  <section class="form-section card">
+    <form method="POST" action="{{ url_for('stocks_page') }}" novalidate>
+      <fieldset class="form-group">
+        <legend class="border-bottom mb-4">Add Stock</legend>
+        <div class="form-field">
+          <label for="symbol" class="form-label">Symbol</label>
+          <input
+            type="text"
+            id="symbol"
+            name="symbol"
+            class="form-input"
+            required
+            maxlength="10"
+            placeholder="e.g. AAPL"
+          />
+        </div>
+        <div class="form-field">
+          <label for="buy_price" class="form-label">Buy Price</label>
+          <input
+            type="number"
+            step="0.01"
+            id="buy_price"
+            name="buy_price"
+            class="form-input"
+            required
+            placeholder="e.g. 150.00"
+          />
+        </div>
+        <div class="form-field">
+          <label for="quantity" class="form-label">Quantity</label>
+          <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            class="form-input"
+            required
+            placeholder="e.g. 10"
+          />
+        </div>
+        <div class="form-field">
+          <label for="buy_date" class="form-label">Buy Date</label>
+          <input
+            type="date"
+            id="buy_date"
+            name="buy_date"
+            class="form-input"
+            required
+          />
+        </div>
+      </fieldset>
+      <div class="form-field">
+        <button type="submit" class="action-button auth-button">
+          Add Stock
+        </button>
+      </div>
+    </form>
+  </section>
 
-                <div class="form-field">
-                    <label for="symbol" class="form-label">Simbol bursier (ex: AAPL)</label>
-                    <input type="text" name="symbol" id="symbol" class="form-input" required>
-                </div>
-
-                <div class="form-field">
-                    <label for="buy_price" class="form-label">Preț Cumpărare</label>
-                    <input type="number" step="0.01" name="buy_price" id="buy_price" class="form-input" required>
-                </div>
-
-                <div class="form-field">
-                    <label for="quantity" class="form-label">Cantitate</label>
-                    <input type="number" name="quantity" id="quantity" class="form-input" required>
-                </div>
-
-                <div class="form-field">
-                    <label for="buy_date" class="form-label">Data Cumpărării</label>
-                    <input type="date" name="buy_date" id="buy_date" class="form-input" required pattern="\d{2}/\d{2}/\d{4}" placeholder="zz/ll/aaaa">
-                </div>
-
-                <div class="form-field">
-                    <button type="submit" class="action-button auth-button">Adaugă în Portofoliu</button>
-                </div>
-            </fieldset>
-        </form>
-    </section>
-
-    <section class="table-section card">
-        <h2>📊 Acțiuni în Portofoliu</h2>
-        {% if stocks %}
-        <table class="styled-table classic-stock-table">
-            <thead>
-                <tr>
-                    <th>Simbol</th>
-                    <th>Cantitate</th>
-                    <th>Preț Cumpărare</th>
-                    <th>Preț Actual</th>
-                    <th>% Win/Loss</th>
-                    <th>Acțiune</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for stock in stocks %}
-                <tr>
-                    <td><strong>{{ stock.symbol }}</strong></td>
-                    <td>{{ stock.quantity }}</td>
-                    <td>${{ '%.2f'|format(stock.buy_price) }}</td>
-                    <td>
-                        {% if stock.current_price != 'Eroare' %}
-                            ${{ '%.2f'|format(stock.current_price) }}
-                        {% else %}
-                            <span class="text-danger">Eroare</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if stock.win_loss is not none %}
-                            <span class="{{ 'text-success' if stock.win_loss >= 0 else 'text-danger' }}">
-                                {{ '%.2f'|format(stock.win_loss) }}%
-                            </span>
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        <form method="POST" action="{{ url_for('delete_stock', stock_id=stock.id) }}" onsubmit="return confirm('Sigur vrei să ștergi această acțiune?');">
-                            <button type="submit" class="action-button danger">Șterge</button>
-                        </form>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="6">
-                        <canvas id="chart-{{ stock.symbol }}" height="100"></canvas>
-                    </td>
-                </tr>
-                <script>
-                fetch("/stock-history/{{ stock.symbol }}")
-                    .then(response => response.json())
-                    .then(data => {
-                        const ctx = document.getElementById('chart-{{ stock.symbol }}').getContext('2d');
-                        new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: data.dates,
-                                datasets: [{
-                                    label: '{{ stock.symbol }} - Preț Istoric',
-                                    data: data.prices,
-                                    borderWidth: 2,
-                                    fill: true,
-                                    pointRadius: 2,
-                                    borderColor: 'rgba(75, 192, 192, 1)',
-                                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                                    tension: 0.2
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: { display: false }
-                                },
-                                scales: {
-                                    x: {
-                                        title: { display: true, text: 'Dată' },
-                                        ticks: { maxRotation: 45, minRotation: 45 }
-                                    },
-                                    y: {
-                                        title: { display: true, text: 'Preț USD' },
-                                        beginAtZero: false
-                                    }
-                                }
-                            }
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Eroare grafic:', error);
-                    });
-                </script>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p>Nu ai adăugat încă nicio acțiune.</p>
-        {% endif %}
-    </section>
+  <section class="form-section card" style="margin-top: 30px">
+    <h2>Your Stocks</h2>
+    {% if stocks and stocks|length > 0 %}
+    <table class="classic-stock-table">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Quantity</th>
+          <th>Buy Price</th>
+          <th>Buy Date</th>
+          <th>Current Price</th>
+          <th>Gain/Loss (%)</th>
+          <th>History</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stock in stocks %}
+        <tr>
+          <td>{{ stock.symbol }}</td>
+          <td>{{ stock.quantity }}</td>
+          <td>{{ stock.buy_price }}</td>
+          <td>{{ stock.buy_date }}</td>
+          <td>
+            {% if stock.current_price == "Error" %}
+            <span class="text-danger">Error</span>
+            {% else %} {{ stock.current_price }} {% endif %}
+          </td>
+          <td>
+            {% if stock.win_loss is not none %}
+            <span
+              class="{% if stock.win_loss >= 0 %}text-success{% else %}text-danger{% endif %}"
+            >
+              {{ stock.win_loss | round(2) }}%
+            </span>
+            {% else %}
+            <span class="text-danger">-</span>
+            {% endif %}
+          </td>
+          <td>
+            <button
+              class="action-button"
+              style="padding: 4px 10px; font-size: 0.9em"
+              onclick="showStockHistory('{{ stock.symbol }}', this)"
+            >
+              Show Chart
+            </button>
+          </td>
+          <td>
+            <form
+              method="POST"
+              action="{{ url_for('delete_stock', stock_id=stock.id) }}"
+              style="display: inline"
+            >
+              <button
+                type="submit"
+                class="action-button danger"
+                onclick="return confirm('Are you sure you want to delete this stock?');"
+              >
+                Delete
+              </button>
+            </form>
+          </td>
+        </tr>
+        <tr id="history-row-{{ stock.symbol }}" style="display: none">
+          <td colspan="8">
+            <canvas id="chart-{{ stock.symbol }}"></canvas>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="placeholder">You have not added any stocks yet.</p>
+    {% endif %}
+  </section>
 </main>
+{% endblock %} {% block page_scripts %}
+<script>
+  function showStockHistory(symbol, btn) {
+    const row = document.getElementById(`history-row-${symbol}`);
+    if (row.style.display === 'none') {
+      fetch(`/stock-history/${symbol}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.dates && data.prices) {
+            const ctx = document
+              .getElementById(`chart-${symbol}`)
+              .getContext('2d');
+            new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: data.dates,
+                datasets: [
+                  {
+                    label: `${symbol} Price`,
+                    data: data.prices,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0,123,255,0.1)',
+                    fill: true,
+                    tension: 0.2,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  legend: { display: false },
+                },
+                scales: {
+                  x: { display: true, title: { display: true, text: 'Date' } },
+                  y: { display: true, title: { display: true, text: 'Price' } },
+                },
+              },
+            });
+          } else {
+            document.getElementById(`chart-${symbol}`).parentNode.innerHTML =
+              '<span class="text-danger">No historical data available.</span>';
+          }
+        });
+      row.style.display = '';
+      btn.textContent = 'Hide Chart';
+    } else {
+      row.style.display = 'none';
+      btn.textContent = 'Show Chart';
+    }
+  }
+</script>
 {% endblock %}

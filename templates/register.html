@@ -1,75 +1,66 @@
-{% extends "base.html" %}
-{% block title %}Înregistrare Utilizator{% endblock %}
-
-{% block page_content %}
+{% extends "base.html" %} {% block title %}User Registration{% endblock %} {%
+block page_content %}
 <header class="page-header">
-    <h1>Creează un Cont Nou.</h1>
+  <h1>Create a New Account</h1>
 </header>
 <main class="content-wrapper-single-form">
-    <section class="form-section card">
-        <form method="POST" action="{{ url_for('register_route') }}" novalidate>
-            {{ form.hidden_tag() }} <fieldset class="form-group">
-                <legend class="border-bottom mb-4">Detalii Înregistrare</legend>
-                <div class="form-field">
-                    {{ form.username.label(class="form-label") }}
-                    {% if form.username.errors %}
-                        {{ form.username(class="form-input form-input-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.username.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.username(class="form-input") }}
-                    {% endif %}
-                </div>
-                <div class="form-field">
-                    {{ form.email.label(class="form-label") }}
-                    {% if form.email.errors %}
-                        {{ form.email(class="form-input form-input-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.email.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.email(class="form-input") }}
-                    {% endif %}
-                </div>
-                <div class="form-field">
-                    {{ form.password.label(class="form-label") }}
-                    {% if form.password.errors %}
-                        {{ form.password(class="form-input form-input-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.password.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.password(class="form-input") }}
-                    {% endif %}
-                </div>
-                <div class="form-field">
-                    {{ form.confirm_password.label(class="form-label") }}
-                    {% if form.confirm_password.errors %}
-                        {{ form.confirm_password(class="form-input form-input-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.confirm_password.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.confirm_password(class="form-input") }}
-                    {% endif %}
-                </div>
-            </fieldset>
-            <div class="form-field">
-                {{ form.submit(class="action-button auth-button") }}
-            </div>
-        </form>
-        <div class="auth-links">
-            Ai deja un cont? <a href="{{ url_for('login_route') }}">Autentifică-te aici</a>
+  <section class="form-section card">
+    <form method="POST" action="{{ url_for('register_route') }}" novalidate>
+      {{ form.hidden_tag() }}
+      <fieldset class="form-group">
+        <legend class="border-bottom mb-4">Registration Details</legend>
+        <div class="form-field">
+          {{ form.username.label(class="form-label") }} {% if
+          form.username.errors %} {{ form.username(class="form-input
+          form-input-invalid") }}
+          <div class="invalid-feedback">
+            {% for error in form.username.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %} {{ form.username(class="form-input") }} {% endif %}
         </div>
-    </section>
+        <div class="form-field">
+          {{ form.email.label(class="form-label") }} {% if form.email.errors %}
+          {{ form.email(class="form-input form-input-invalid") }}
+          <div class="invalid-feedback">
+            {% for error in form.email.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %} {{ form.email(class="form-input") }} {% endif %}
+        </div>
+        <div class="form-field">
+          {{ form.password.label(class="form-label") }} {% if
+          form.password.errors %} {{ form.password(class="form-input
+          form-input-invalid") }}
+          <div class="invalid-feedback">
+            {% for error in form.password.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %} {{ form.password(class="form-input") }} {% endif %}
+        </div>
+        <div class="form-field">
+          {{ form.confirm_password.label(class="form-label") }} {% if
+          form.confirm_password.errors %} {{
+          form.confirm_password(class="form-input form-input-invalid") }}
+          <div class="invalid-feedback">
+            {% for error in form.confirm_password.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% else %} {{ form.confirm_password(class="form-input") }} {% endif %}
+        </div>
+      </fieldset>
+      <div class="form-field">
+        {{ form.submit(class="action-button auth-button") }}
+      </div>
+    </form>
+    <div class="auth-links">
+      Already have an account?
+      <a href="{{ url_for('login_route') }}">Login here</a>
+    </div>
+  </section>
 </main>
 {% endblock %}

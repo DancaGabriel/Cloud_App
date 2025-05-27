@@ -1,17 +1,17 @@
-{% extends "base.html" %} {% block title %}Bine ai venit la Convertorul Valutar
-Inteligent!{% endblock %} {% block page_content %}
+{% extends "base.html" %} {% block title %}Welcome to the Smart Currency
+Converter!{% endblock %} {% block page_content %}
 <header class="page-header">
-  <h1>Convertor Valutar Inteligent</h1>
+  <h1>Smart Currency Converter</h1>
   <p class="subtitle">
-    Platforma ta completă pentru rate de schimb, conversii valutare și
-    monitorizare bursieră.
+    Your all-in-one platform for exchange rates, currency conversions, and stock
+    monitoring.
   </p>
 </header>
 
 <main class="content-wrapper-single-form">
   <section class="form-section card" style="text-align: center">
     <h2 style="font-size: 1.5em; color: #0056b3; margin-bottom: 18px">
-      Ce poți face cu aplicația noastră?
+      What can you do with our app?
     </h2>
     <ul
       style="
@@ -34,8 +34,8 @@ Inteligent!{% endblock %} {% block page_content %}
       >
         <span style="font-size: 1.4em; color: #007bff">&#128200;</span>
         <div>
-          <b>Rate oficiale BNR &amp; piețe globale:</b> Accesezi rapid cursurile
-          de schimb pentru 34 de valute, actualizate zilnic și istoric.
+          <b>Official BNR & global rates:</b> Instantly access exchange rates
+          for 34 currencies, updated daily and historically.
         </div>
       </li>
       <li
@@ -48,8 +48,9 @@ Inteligent!{% endblock %} {% block page_content %}
       >
         <span style="font-size: 1.4em; color: #007bff">&#128176;</span>
         <div>
-          <b>Convertor valutar avansat:</b> Calculezi orice sumă între valute,
-          direct sau prin RON, cu transparență totală asupra costurilor ascunse.
+          <b>Advanced currency converter:</b> Calculate any amount between
+          currencies, directly or via RON, with full transparency on hidden
+          costs.
         </div>
       </li>
       <li
@@ -62,8 +63,8 @@ Inteligent!{% endblock %} {% block page_content %}
       >
         <span style="font-size: 1.4em; color: #007bff">&#128202;</span>
         <div>
-          <b>Comparație trasee valutare:</b> Vezi diferența dintre conversia la
-          casierie (EUR→RON→USD) și cea online directă, pentru decizii mai bune.
+          <b>Currency path comparison:</b> See the difference between cash-desk
+          conversion (EUR→RON→USD) and direct online, for smarter decisions.
         </div>
       </li>
       <li
@@ -76,8 +77,8 @@ Inteligent!{% endblock %} {% block page_content %}
       >
         <span style="font-size: 1.4em; color: #007bff">&#9201;&#65039;</span>
         <div>
-          <b>Monitorizare bursieră orară:</b> Urmărești acțiuni și primești
-          alerte când prețul atinge pragul dorit, cu grafice interactive.
+          <b>Hourly stock monitoring:</b> Track stocks and get alerts when your
+          target price is reached, with interactive charts.
         </div>
       </li>
       <li
@@ -90,15 +91,15 @@ Inteligent!{% endblock %} {% block page_content %}
       >
         <span style="font-size: 1.4em; color: #007bff">&#128640;</span>
         <div>
-          <b>Export rapid:</b> Salvezi datele în format CSV sau PNG pentru
-          analiză sau raportare.
+          <b>Quick export:</b> Save data as CSV or PNG for analysis or
+          reporting.
         </div>
       </li>
     </ul>
     <div style="margin-bottom: 30px">
       <span class="small-text"
-        >Ideal pentru studenți Erasmus, turiști, freelanceri, investitori și
-        IMM-uri.</span
+        >Perfect for Erasmus students, tourists, freelancers, investors, and
+        SMEs.</span
       >
     </div>
     <div
@@ -108,7 +109,7 @@ Inteligent!{% endblock %} {% block page_content %}
         href="{{ url_for('login_route') }}"
         class="action-button auth-button"
         style="max-width: 220px"
-        >Autentificare</a
+        >Login</a
       >
       <a
         href="{{ url_for('register_route') }}"
@@ -117,7 +118,7 @@ Inteligent!{% endblock %} {% block page_content %}
           background-image: linear-gradient(to right, #28a745 0%, #218838 100%);
           max-width: 220px;
         "
-        >Înregistrare</a
+        >Register</a
       >
     </div>
   </section>

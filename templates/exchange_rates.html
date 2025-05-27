@@ -1,69 +1,70 @@
-{% extends "base.html" %} {% block title %}Curs Valutar - Rate Curente &
-Istorice{% endblock %} {% block page_content %}
+{% extends "base.html" %} {% block title %}Exchange Rates - Current &
+Historical{% endblock %} {% block page_content %}
 <header class="page-header">
-  <h1>Curs Valutar</h1>
+  <h1>Exchange Rates</h1>
   <p class="subtitle">
-    Află rapid ratele de schimb actuale și istorice pentru principalele valute.
-    Datele sunt preluate din surse de încredere: ExchangeRate-API și
-    Frankfurter.app (BCE).
+    Quickly find current and historical exchange rates for major currencies.
+    Data is sourced from trusted providers: ExchangeRate-API and Frankfurter.app
+    (ECB).
   </p>
 </header>
 
 <section class="base-currency-selector-section card">
-  <h2>Selectează Moneda de Bază</h2>
+  <h2>Select Base Currency</h2>
   <div class="currency-selector-controls">
-    <label for="baseCurrencySelect">Moneda:</label>
+    <label for="baseCurrencySelect">Currency:</label>
     <select id="baseCurrencySelect" name="baseCurrency">
-      <option value="USD" selected>USD - Dolar American</option>
+      <option value="USD" selected>USD - US Dollar</option>
       <option value="EUR">EUR - Euro</option>
-      <option value="GBP">GBP - Liră Sterlină</option>
-      <option value="RON">RON - Leu Românesc</option>
-      <option value="JPY">JPY - Yen Japonez</option>
-      <option value="CAD">CAD - Dolar Canadian</option>
-      <option value="AUD">AUD - Dolar Australian</option>
-      <option value="CHF">CHF - Franc Elvețian</option>
+      <option value="GBP">GBP - British Pound</option>
+      <option value="RON">RON - Romanian Leu</option>
+      <option value="JPY">JPY - Japanese Yen</option>
+      <option value="CAD">CAD - Canadian Dollar</option>
+      <option value="AUD">AUD - Australian Dollar</option>
+      <option value="CHF">CHF - Swiss Franc</option>
     </select>
   </div>
   <p class="section-description small-text">
-    Moneda selectată va fi folosită ca bază pentru ambele secțiuni de mai jos.
+    The selected currency will be used as the base for both sections below.
   </p>
 </section>
 
 <main class="content-wrapper">
   <section id="currentRatesSection" class="rate-section card">
-    <h2>Rate Curente (ExchangeRate-API)</h2>
+    <h2>Current Rates (ExchangeRate-API)</h2>
     <p class="section-description">
-      Ultimele rate de schimb, actualizate zilnic. Datele pot fi din cache-ul
-      local sau direct de la API. <br /><span class="small-text"
-        >Sursa: <b>ExchangeRate-API</b> (piețe globale, actualizare
-        frecventă)</span
+      The latest exchange rates, updated daily. Data may come from the local
+      cache or directly from the API. <br /><span class="small-text"
+        >Source: <b>ExchangeRate-API</b> (global markets, frequent
+        updates)</span
       >
     </p>
     <button id="fetchCurrentRatesBtn" class="action-button">
-      Actualizează Ratele Curente
+      Update Current Rates
     </button>
     <div id="currentRatesContainer" class="rates-display-box">
-      <p class="placeholder">Apasă butonul pentru a vedea ratele curente...</p>
+      <p class="placeholder">Click the button to view current rates...</p>
     </div>
   </section>
 
   <section id="historicalRatesFrankfurterSection" class="rate-section card">
-    <h2>Curs Istoric (Frankfurter.app - BCE)</h2>
+    <h2>Historical Rate (Frankfurter.app - ECB)</h2>
     <p class="section-description">
-      Cursul pentru o dată specifică (04 Ian 1999 - ieri), via Frankfurter.app
-      (date de la Banca Centrală Europeană). <br /><span class="small-text"
-        >Ideal pentru analize istorice și comparații pe termen lung.</span
+      The rate for a specific date (Jan 4, 1999 - yesterday), via
+      Frankfurter.app (data from the European Central Bank). <br /><span
+        class="small-text"
+        >Ideal for historical analysis and long-term comparisons.</span
       >
     </p>
     <div class="date-selector-container">
-      <label for="frankfurterDateInput">Data:</label>
+      <label for="frankfurterDateInput">Date:</label>
       <input type="date" id="frankfurterDateInput" name="frankfurterDate" />
       <button id="fetchFrankfurterBtn" class="action-button">
-        Afișează Curs Istoric
+        Show Historical Rate
       </button>
     </div>
     <div id="frankfurterRatesContainer" class="rates-display-box">
-      <p class="placeholder">Selectează o dată și apasă butonul...</p>
+      <p class="placeholder">Select a date and click the button...</p>
     </div>
   </section>
 </main>
