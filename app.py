@@ -222,6 +222,11 @@ def hello_world():
     current_year = datetime.now().year
     return render_template('index.html', year=current_year)
 
+@app.route('/exchange-rates')
+def exchange_rates_page():
+    current_year = datetime.now().year
+    return render_template('exchange_rates.html', year=current_year)
+
 @app.route('/visualize')
 @login_required # Am protejat această rută
 def visualize_page():

@@ -1,56 +1,125 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Bine ai venit la Convertorul Valutar
+Inteligent!{% endblock %} {% block page_content %}
+<header class="page-header">
+  <h1>Convertor Valutar Inteligent</h1>
+  <p class="subtitle">
+    Platforma ta completă pentru rate de schimb, conversii valutare și
+    monitorizare bursieră.
+  </p>
+</header>
 
-{% block title %}Rate de Schimb - Convertor Valutar{% endblock %}
-
-{% block page_content %}
-    <header class="page-header">
-        <h1>Nume</h1>
-        <p class="subtitle">Obține ratele de schimb curente și istorice, rapid și eficient.</p>
-    </header>
-
-    <section class="base-currency-selector-section card">
-        <h2>Selectează Moneda de Bază</h2>
-        <div class="currency-selector-controls">
-            <label for="baseCurrencySelect">Moneda:</label>
-            <select id="baseCurrencySelect" name="baseCurrency">
-                <option value="USD" selected>USD - Dolar American</option>
-                <option value="EUR">EUR - Euro</option>
-                <option value="GBP">GBP - Liră Sterlină</option>
-                <option value="RON">RON - Leu Românesc</option>
-                <option value="JPY">JPY - Yen Japonez</option>
-                <option value="CAD">CAD - Dolar Canadian</option>
-                <option value="AUD">AUD - Dolar Australian</option>
-                <option value="CHF">CHF - Franc Elvețian</option>
-            </select>
+<main class="content-wrapper-single-form">
+  <section class="form-section card" style="text-align: center">
+    <h2 style="font-size: 1.5em; color: #0056b3; margin-bottom: 18px">
+      Ce poți face cu aplicația noastră?
+    </h2>
+    <ul
+      style="
+        list-style: none;
+        padding: 0;
+        margin-bottom: 28px;
+        text-align: left;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      "
+    >
+      <li
+        style="
+          margin-bottom: 18px;
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        "
+      >
+        <span style="font-size: 1.4em; color: #007bff">&#128200;</span>
+        <div>
+          <b>Rate oficiale BNR &amp; piețe globale:</b> Accesezi rapid cursurile
+          de schimb pentru 34 de valute, actualizate zilnic și istoric.
         </div>
-        <p class="section-description small-text">Moneda selectată aici va fi folosită ca bază pentru ambele secțiuni de mai jos.</p>
-    </section>
-
-    <main class="content-wrapper">
-        <section id="currentRatesSection" class="rate-section card">
-            <h2>Rate Curente (ExchangeRate-API)</h2>
-            <p class="section-description">Ultimele rate de schimb, actualizate zilnic. Datele pot fi din cache-ul local sau direct de la API.</p>
-            <button id="fetchCurrentRatesBtn" class="action-button">Actualizează Ratele Curente</button>
-            <div id="currentRatesContainer" class="rates-display-box">
-                <p class="placeholder">Apasă butonul pentru a vedea ratele curente...</p>
-            </div>
-        </section>
-
-        <section id="historicalRatesFrankfurterSection" class="rate-section card">
-            <h2>Curs Istoric (Frankfurter.app - BCE)</h2>
-            <p class="section-description">Cursul pentru o dată specifică (04 Ian 1999 - ieri), via Frankfurter.app (date de la Banca Centrală Europeană).</p>
-            <div class="date-selector-container">
-                <label for="frankfurterDateInput">Data:</label>
-                <input type="date" id="frankfurterDateInput" name="frankfurterDate">
-                <button id="fetchFrankfurterBtn" class="action-button">Afișează Curs Istoric</button>
-            </div>
-            <div id="frankfurterRatesContainer" class="rates-display-box">
-                <p class="placeholder">Selectează o dată și apasă butonul...</p>
-            </div>
-        </section>
-    </main>
-{% endblock %}
-
-{% block page_scripts %}
-    <!-- <script src="{{ url_for('static', filename='js/script.js') }}"></script> -->
-{% endblock %}
+      </li>
+      <li
+        style="
+          margin-bottom: 18px;
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        "
+      >
+        <span style="font-size: 1.4em; color: #007bff">&#128176;</span>
+        <div>
+          <b>Convertor valutar avansat:</b> Calculezi orice sumă între valute,
+          direct sau prin RON, cu transparență totală asupra costurilor ascunse.
+        </div>
+      </li>
+      <li
+        style="
+          margin-bottom: 18px;
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        "
+      >
+        <span style="font-size: 1.4em; color: #007bff">&#128202;</span>
+        <div>
+          <b>Comparație trasee valutare:</b> Vezi diferența dintre conversia la
+          casierie (EUR→RON→USD) și cea online directă, pentru decizii mai bune.
+        </div>
+      </li>
+      <li
+        style="
+          margin-bottom: 18px;
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        "
+      >
+        <span style="font-size: 1.4em; color: #007bff">&#9201;&#65039;</span>
+        <div>
+          <b>Monitorizare bursieră orară:</b> Urmărești acțiuni și primești
+          alerte când prețul atinge pragul dorit, cu grafice interactive.
+        </div>
+      </li>
+      <li
+        style="
+          margin-bottom: 0;
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        "
+      >
+        <span style="font-size: 1.4em; color: #007bff">&#128640;</span>
+        <div>
+          <b>Export rapid:</b> Salvezi datele în format CSV sau PNG pentru
+          analiză sau raportare.
+        </div>
+      </li>
+    </ul>
+    <div style="margin-bottom: 30px">
+      <span class="small-text"
+        >Ideal pentru studenți Erasmus, turiști, freelanceri, investitori și
+        IMM-uri.</span
+      >
+    </div>
+    <div
+      style="display: flex; justify-content: center; gap: 18px; flex-wrap: wrap"
+    >
+      <a
+        href="{{ url_for('login_route') }}"
+        class="action-button auth-button"
+        style="max-width: 220px"
+        >Autentificare</a
+      >
+      <a
+        href="{{ url_for('register_route') }}"
+        class="action-button auth-button"
+        style="
+          background-image: linear-gradient(to right, #28a745 0%, #218838 100%);
+          max-width: 220px;
+        "
+        >Înregistrare</a
+      >
+    </div>
+  </section>
+</main>
+{% endblock %} {% block page_scripts %}{% endblock %}
