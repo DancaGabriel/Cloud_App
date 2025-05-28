@@ -31,67 +31,70 @@
     >
       <ul>
         <li><a href="{{ url_for('hello_world') }}">Home (Rates)</a></li>
-        <li><a href="{{ url_for('exchange_rates_page') }}">Exchange Rates</a></li>
-        <li><a href="{{ url_for('visualize_page') }}">Data Visualization</a></li>
+        <li>
+          <a href="{{ url_for('exchange_rates_page') }}">Exchange Rates</a>
+        </li>
+        <li>
+          <a href="{{ url_for('visualize_page') }}">Data Visualization</a>
+        </li>
         <hr class="menu-divider" />
         {% if current_user.is_authenticated %}
-          <li><a href="#">Hello, {{ current_user.username }}!</a></li>
-          <li><a href="{{ url_for('logout_route') }}">Logout</a></li>
-          <li><a href="{{ url_for('stocks_page') }}">Stock Portfolio</a></li>
-          <li><a href="{{ url_for('verify_student') }}">Verify Student Status</a></li>
+        <li><a href="#">Hello, {{ current_user.username }}!</a></li>
+        <li><a href="{{ url_for('logout_route') }}">Logout</a></li>
+        <li><a href="{{ url_for('stocks_page') }}">Stock Portfolio</a></li>
+        <li>
+          <a href="{{ url_for('verify_student') }}">Verify Student Status</a>
+        </li>
         {% else %}
-          <li><a href="{{ url_for('login_route') }}">Login</a></li>
-          <li><a href="{{ url_for('register_route') }}">Register</a></li>
+        <li><a href="{{ url_for('login_route') }}">Login</a></li>
+        <li><a href="{{ url_for('register_route') }}">Register</a></li>
         {% endif %}
       </ul>
     </nav>
 
     <div class="page-content-wrapper">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="flash-messages-container">
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
-      {% block page_content %}{% endblock %}
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <div class="flash-messages-container">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %} {% endwith %} {% block page_content %}{% endblock %}
     </div>
 
     <footer class="page-footer">
-      <p>&copy; {{ year }} Currency Exchange App. Built with Flask and ❤️.</p>
+      <p>Copyright &copy; {{ year }}</p>
     </footer>
 
     {% block base_scripts %}
-      <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    {% endblock %}
-    {% block page_scripts %}{% endblock %}
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% endblock %} {% block page_scripts %}{% endblock %}
 
     <!-- Image submission script, only if logged in -->
     {% if current_user.is_authenticated %}
     <script>
-      const form = document.getElementById("student-verification-form");
+      const form = document.getElementById('student-verification-form');
       if (form) {
-        form.addEventListener("submit", async (e) => {
+        form.addEventListener('submit', async (e) => {
           e.preventDefault();
           const formData = new FormData(form);
-          const statusBox = document.getElementById("student-status-response");
-          statusBox.innerText = "⏳ Processing image...";
+          const statusBox = document.getElementById('student-status-response');
+          statusBox.innerText = '⏳ Processing image...';
 
           try {
-            const res = await fetch("/verify-student", {
-              method: "POST",
+            const res = await fetch('/verify-student', {
+              method: 'POST',
               body: formData,
             });
             const data = await res.json();
             statusBox.innerText = `${data.status}: ${data.message}`;
-            statusBox.style.color = data.status === "Success" ? "green" : "red";
+            statusBox.style.color = data.status === 'Success' ? 'green' : 'red';
           } catch (err) {
             console.error(err);
-            statusBox.innerText = "Error submitting the image.";
-            statusBox.style.color = "red";
+            statusBox.innerText = 'Error submitting the image.';
+            statusBox.style.color = 'red';
           }
         });
       }
