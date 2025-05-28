@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, f
 from dotenv import load_dotenv
 import os
 import requests
+import easyocr
 import pandas as pd
 import yfinance as yf
 import mysql.connector
@@ -32,6 +33,8 @@ login_manager.init_app(app)
 login_manager.login_view = 'login_route'
 login_manager.login_message = "Te rog să te autentifici pentru a accesa această pagină."
 login_manager.login_message_category = "info"
+
+reader = easyocr.Reader(['ro', 'en'])  
 
 class User(UserMixin):
     def __init__(self, id, username, email, password_hash=None):
@@ -429,7 +432,6 @@ def stocks_page():
         finally:
             cursor.close()
 
-    # Acțiuni salvate de utilizator
     user_stocks = []
     try:
         cursor = conn.cursor(dictionary=True)
@@ -437,14 +439,14 @@ def stocks_page():
         rows = cursor.fetchall()
         for row in rows:
             current_price = get_current_stock_price(row['symbol'])
-            buy_price = float(row['buy_price'])  # convertim decimal → float
+            buy_price = float(row['buy_price'])  
             if current_price is not None:
                 win_loss = ((current_price - buy_price) / buy_price) * 100
             else:
                 current_price = "Eroare"
                 win_loss = None
             user_stocks.append({
-                "id": row['id'],  # <-- Adăugăm ID-ul pentru delete
+                "id": row['id'], 
                 "symbol": row['symbol'],
                 "quantity": row['quantity'],
                 "buy_price": buy_price,
@@ -467,7 +469,6 @@ def delete_stock(stock_id):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        # Asigurăm că ștergem doar acțiunea utilizatorului curent
         cursor.execute("DELETE FROM user_stocks WHERE id = %s AND user_id = %s", (stock_id, current_user.id))
         conn.commit()
         flash("Acțiunea a fost ștearsă cu succes.", "info")
@@ -501,7 +502,6 @@ def stock_history(symbol):
         cursor.close()
         conn.close()
 
-    # fallback: 30 zile
     if not from_date:
         from_date = datetime.now() - timedelta(days=30)
 
@@ -511,18 +511,58 @@ def stock_history(symbol):
             return jsonify({"error": "Date istorice indisponibile sau lipsesc coloane."}), 404
 
         dates = df.index.to_series().dt.strftime('%Y-%m-%d').tolist()
-        close_column = df['Close'].squeeze()  # evită DataFrame dublu coloană
 
-        if isinstance(close_column, pd.Series):
-            prices = close_column.round(2).tolist()
-            return jsonify({"dates": dates, "prices": prices})
+        close_data = df['Close']
+        if isinstance(close_data, pd.DataFrame):
+            close_series = close_data.iloc[:, 0]
         else:
-            print("⚠️ Atenție: df['Close'] nu e Series, ci:", type(close_column))
-            return jsonify({"error": "Format invalid pentru coloana 'Close'"}), 500
+            close_series = close_data
+
+        prices = close_series.round(2).tolist()
+
+        return jsonify({"dates": dates, "prices": prices})
 
     except Exception as e:
         print(f"Eroare la yfinance: {e}")
         return jsonify({"error": "Eroare la preluarea datelor din yfinance"}), 500
+
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/verify-student', methods=['GET'])
+@login_required
+def verify_student_form():
+    return render_template('verify_student.html', year=datetime.now().year)
+
+@app.route('/verify-student', methods=['POST'])
+@login_required
+def verify_student():
+    import easyocr
+    from flask import request, jsonify
+
+    if 'image' not in request.files:
+        return jsonify({'status': 'Error', 'message': 'No file was sent.'}), 400
+
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'status': 'Error', 'message': 'Invalid or empty file.'}), 400
+
+    try:
+        image_bytes = file.read()
+        reader = easyocr.Reader(['en', 'ro'])
+        results = reader.readtext(image_bytes)
+        text = " ".join([res[1] for res in results]).lower()
+
+        keywords = ["student", "matricol", "university", "faculty", "facultate", "universitate"]
+        if any(kw in text for kw in keywords):
+            return jsonify({'status': 'Success', 'message': 'Student status confirmed ✅'})
+        else:
+            return jsonify({'status': 'Fail', 'message': 'No student-related elements detected ❌'})
+    except Exception as e:
+        return jsonify({'status': 'Error', 'message': f'Image processing error: {str(e)}'}), 500
+
 
 if __name__ == '__main__':
     create_user_stocks_table_if_not_exists()
