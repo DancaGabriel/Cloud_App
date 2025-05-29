@@ -2,7 +2,7 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, f
 from dotenv import load_dotenv
 import os
 import requests
-import easyocr
+import boto3
 import pandas as pd
 import yfinance as yf
 import mysql.connector
@@ -12,6 +12,8 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+
+textract_client = boto3.client('textract', region_name='eu-central-1')
 
 load_dotenv()
 
@@ -33,8 +35,6 @@ login_manager.init_app(app)
 login_manager.login_view = 'login_route'
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info"
-
-reader = easyocr.Reader(['ro', 'en'])  
 
 class User(UserMixin):
     def __init__(self, id, username, email, password_hash=None):
@@ -577,6 +577,12 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+import boto3
+from flask import request, jsonify
+from datetime import datetime
+
+textract_client = boto3.client('textract', region_name='eu-west-1')  # Nu uita să setezi regiunea!
+
 @app.route('/verify-student', methods=['GET'])
 @login_required
 def verify_student_form():
@@ -585,9 +591,6 @@ def verify_student_form():
 @app.route('/verify-student', methods=['POST'])
 @login_required
 def verify_student():
-    import easyocr
-    from flask import request, jsonify
-
     if 'image' not in request.files:
         return jsonify({'status': 'Error', 'message': 'No file was sent.'}), 400
 
@@ -597,15 +600,18 @@ def verify_student():
 
     try:
         image_bytes = file.read()
-        reader = easyocr.Reader(['en', 'ro'])
-        results = reader.readtext(image_bytes)
-        text = " ".join([res[1] for res in results]).lower()
+        response = textract_client.detect_document_text(Document={'Bytes': image_bytes})
+
+        text_lines = [block['Text'] for block in response['Blocks'] if block['BlockType'] == 'LINE']
+        text = " ".join(text_lines).lower()
 
         keywords = ["student", "matricol", "university", "faculty", "facultate", "universitate"]
-        if any(kw in text for kw in keywords):
+        found_keywords = sum(1 for kw in keywords if kw in text)
+
+        if found_keywords >= 2:
             return jsonify({'status': 'Success', 'message': 'Student status confirmed ✅'})
         else:
-            return jsonify({'status': 'Fail', 'message': 'No student-related elements detected ❌'})
+            return jsonify({'status': 'Fail', 'message': 'Not enough student-related elements detected ❌'})
     except Exception as e:
         return jsonify({'status': 'Error', 'message': f'Image processing error: {str(e)}'}), 500
 
