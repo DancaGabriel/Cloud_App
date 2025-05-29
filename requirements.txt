@@ -32,3 +32,7 @@ WTForms==3.2.1
 zope.interface==7.2
 yfinance>=0.2.18
 boto3>=1.26.0
+matplotlib
+scikit-learn
+-send_file
+pandas
