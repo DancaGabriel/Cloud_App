@@ -1,41 +1,209 @@
-{% extends "base.html" %} {% block title %}Data Visualization - Currency
-Converter{% endblock %} {% block page_content %}
+{% extends "base.html" %}
+{% block title %}Data Visualization – Currency Converter{% endblock %}
+
+{% block page_content %}
 <header class="page-header">
   <h1>Exchange Rate Visualization</h1>
-  <p class="subtitle">Analyze the evolution of exchange rates.</p>
+  <p class="subtitle">Explore the historical evolution of currency pairs.</p>
 </header>
 
 <main class="content-wrapper">
+  <!-- Historical Chart Section -->
   <section class="visualization-content card">
-    <h2>Interactive Charts</h2>
+    <h2>Historical Chart</h2>
     <p class="section-description">
-      This section is under development. Here you will be able to view charts
-      showing the historical evolution of exchange rates for different currency
-      pairs.
+      Select your currency pair and date range, then click “Generate Chart”.
     </p>
 
-    <div
-      id="chartPlaceholder"
-      style="
-        width: 100%;
-        height: 400px;
-        background-color: #e9ecef;
-        border: 1px solid #ced4da;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        margin-top: 20px;
-      "
-    >
-      <p style="color: #6c757d; font-style: italic">
-        (Reserved area for interactive chart)
-      </p>
+    <form id="vizForm" class="date-selector-container">
+      <div class="currency-selector-controls">
+        <label for="baseSelect">Base Currency</label>
+        <select id="baseSelect">
+          <option value="USD" selected>USD – US Dollar</option>
+          <option value="EUR">EUR – Euro</option>
+          <option value="GBP">GBP – British Pound</option>
+          <option value="RON">RON – Romanian Leu</option>
+          <option value="JPY">JPY – Japanese Yen</option>
+          <option value="CAD">CAD – Canadian Dollar</option>
+          <option value="AUD">AUD – Australian Dollar</option>
+          <option value="CHF">CHF – Swiss Franc</option>
+        </select>
+      </div>
+
+      <div class="currency-selector-controls">
+        <label for="targetSelect">Target Currency</label>
+        <select id="targetSelect">
+          <option value="RON" selected>RON – Romanian Leu</option>
+          <option value="USD">USD – US Dollar</option>
+          <option value="EUR">EUR – Euro</option>
+          <option value="GBP">GBP – British Pound</option>
+          <option value="JPY">JPY – Japanese Yen</option>
+          <option value="CAD">CAD – Canadian Dollar</option>
+          <option value="AUD">AUD – Australian Dollar</option>
+          <option value="CHF">CHF – Swiss Franc</option>
+        </select>
+      </div>
+
+      <div class="date-selector-container">
+        <label for="startInput">Start Date</label>
+        <input id="startInput" type="date" max="{{ max_date }}" />
+      </div>
+
+      <div class="date-selector-container">
+        <label for="endInput">End Date</label>
+        <input id="endInput" type="date" max="{{ max_date }}" />
+      </div>
+
+      <button type="submit" class="action-button">Generate Chart</button>
+    </form>
+
+    <div id="vizError" class="error" style="display:none; margin-top:1rem;"></div>
+    <div id="chartContainer" style="margin-top:1rem;">
+      <img id="chartImage" alt="Exchange Rate Chart" style="display:none; max-width:100%;" />
     </div>
-    <p class="section-description" style="margin-top: 20px">
-      We will integrate a charting library (e.g. Chart.js or Plotly) to display
-      the data stored in the database.
-    </p>
+
+    <!-- Forecast Section (now directly under the chart) -->
+    <section class="forecast-section" style="margin-top:2rem;">
+      <h2>Forecast for Tomorrow</h2>
+      <p class="section-description">
+        Get the probability that the selected pair will rise tomorrow.
+      </p>
+
+      <div class="currency-selector-controls">
+        <label for="forecastBaseSelect">Forecast Base Currency</label>
+        <select id="forecastBaseSelect">
+          <option value="USD" selected>USD – US Dollar</option>
+          <option value="EUR">EUR – Euro</option>
+          <option value="GBP">GBP – British Pound</option>
+          <option value="RON">RON – Romanian Leu</option>
+          <option value="JPY">JPY – Japanese Yen</option>
+          <option value="CAD">CAD – Canadian Dollar</option>
+          <option value="AUD">AUD – Australian Dollar</option>
+          <option value="CHF">CHF – Swiss Franc</option>
+        </select>
+      </div>
+
+      <div class="currency-selector-controls">
+        <label for="forecastTargetSelect">Forecast Target Currency</label>
+        <select id="forecastTargetSelect">
+          <option value="RON" selected>RON – Romanian Leu</option>
+          <option value="USD">USD – US Dollar</option>
+          <option value="EUR">EUR – Euro</option>
+          <option value="GBP">GBP – British Pound</option>
+          <option value="JPY">JPY – Japanese Yen</option>
+          <option value="CAD">CAD – Canadian Dollar</option>
+          <option value="AUD">AUD – Australian Dollar</option>
+          <option value="CHF">CHF – Swiss Franc</option>
+        </select>
+      </div>
+
+      <button id="forecastBtn" class="action-button">Get Forecast</button>
+      <div id="forecastResult" class="section-description small-text"
+           style="margin-top:1rem; padding:0.5rem; border-radius:4px;"></div>
+    </section>
   </section>
 </main>
-{% endblock %} {% block page_scripts %} {% endblock %}
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Historical Chart Handler
+  const vizForm = document.getElementById('vizForm');
+  const vizError = document.getElementById('vizError');
+  const chartImg = document.getElementById('chartImage');
+
+  vizForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    vizError.style.display = 'none';
+    chartImg.style.display = 'none';
+
+    const base   = document.getElementById('baseSelect').value;
+    const target = document.getElementById('targetSelect').value;
+    const start  = document.getElementById('startInput').value;
+    const end    = document.getElementById('endInput').value;
+
+    if (base === target) {
+      vizError.textContent = 'Base and target currencies must differ.';
+      vizError.style.display = 'block';
+      return;
+    }
+    if (!start || !end) {
+      vizError.textContent = 'Please select both start and end dates.';
+      vizError.style.display = 'block';
+      return;
+    }
+    if (start > end) {
+      vizError.textContent = 'Start date must be before end date.';
+      vizError.style.display = 'block';
+      return;
+    }
+
+    try {
+      const url = `/visualization-image?base=${base}&target=${target}&start=${start}&end=${end}&_=${Date.now()}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const text = await res.text();
+        vizError.textContent = text;
+        vizError.style.display = 'block';
+        return;
+      }
+      const blob = await res.blob();
+      chartImg.src = URL.createObjectURL(blob);
+      chartImg.style.display = 'block';
+    } catch (err) {
+      vizError.textContent = 'Error generating chart: ' + err.message;
+      vizError.style.display = 'block';
+    }
+  });
+
+  // Forecast Handler
+  const forecastBtn = document.getElementById('forecastBtn');
+  const forecastRes = document.getElementById('forecastResult');
+
+  forecastBtn.addEventListener('click', async () => {
+    forecastRes.textContent = '';
+    forecastRes.style.backgroundColor = '';
+    forecastRes.style.color = '';
+
+    const base   = document.getElementById('forecastBaseSelect').value;
+    const target = document.getElementById('forecastTargetSelect').value;
+
+    if (base === target) {
+      forecastRes.textContent = 'Base and target currencies must differ.';
+      forecastRes.style.backgroundColor = '#f8d7da';
+      return;
+    }
+
+    try {
+      const url = `/forecast?base=${base}&target=${target}&_=${Date.now()}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const msg = await res.text();
+        forecastRes.textContent = msg;
+        forecastRes.style.backgroundColor = '#f8d7da';
+        return;
+      }
+      const js = await res.json();
+      const pct = js.prob_up * 100;
+
+      if (pct < 48) {
+        forecastRes.style.backgroundColor = '#f8d7da';
+        forecastRes.style.color = '#721c24';
+      } else if (pct <= 52) {
+        forecastRes.style.backgroundColor = '#fff3cd';
+        forecastRes.style.color = '#856404';
+      } else {
+        forecastRes.style.backgroundColor = '#d4edda';
+        forecastRes.style.color = '#155724';
+      }
+
+      forecastRes.textContent = `Probability of increase tomorrow: ${pct.toFixed(2)}%`;
+    } catch (err) {
+      forecastRes.textContent = 'Forecast error: ' + err.message;
+      forecastRes.style.backgroundColor = '#f8d7da';
+    }
+  });
+});
+</script>
+{% endblock %}

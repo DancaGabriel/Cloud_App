@@ -1,10 +1,12 @@
-{% extends "base.html" %} {% block title %}Welcome to the Smart Currency
-Converter!{% endblock %} {% block page_content %}
+{% extends "base.html" %}
+
+{% block title %}Welcome to the Smart Currency Converter!{% endblock %}
+
+{% block page_content %}
 <header class="page-header">
   <h1>Smart Currency Converter</h1>
   <p class="subtitle">
-    Your all-in-one platform for exchange rates, currency conversions, and stock
-    monitoring.
+    Your all-in-one platform for exchange rates, currency conversions, and stock monitoring.
   </p>
 </header>
 
@@ -91,36 +93,42 @@ Converter!{% endblock %} {% block page_content %}
       >
         <span style="font-size: 1.4em; color: #007bff">&#128640;</span>
         <div>
-          <b>Quick export:</b> Save data as CSV or PNG for analysis or
-          reporting.
+          <b>Quick export:</b> Save data as CSV or PNG for analysis or reporting.
         </div>
       </li>
     </ul>
+
     <div style="margin-bottom: 30px">
-      <span class="small-text"
-        >Perfect for Erasmus students, tourists, freelancers, investors, and
-        SMEs.</span
-      >
+      <span class="small-text">
+        Perfect for Erasmus students, tourists, freelancers, investors, and SMEs.
+      </span>
     </div>
-    <div
-      style="display: flex; justify-content: center; gap: 18px; flex-wrap: wrap"
-    >
-      <a
-        href="{{ url_for('login_route') }}"
-        class="action-button auth-button"
-        style="max-width: 220px"
-        >Login</a
+
+    {% if not current_user.is_authenticated %}
+      <div
+        style="display: flex; justify-content: center; gap: 18px; flex-wrap: wrap"
       >
-      <a
-        href="{{ url_for('register_route') }}"
-        class="action-button auth-button"
-        style="
-          background-image: linear-gradient(to right, #28a745 0%, #218838 100%);
-          max-width: 220px;
-        "
-        >Register</a
-      >
-    </div>
+        <a
+          href="{{ url_for('login_route') }}"
+          class="action-button auth-button"
+          style="max-width: 220px"
+        >
+          Login
+        </a>
+        <a
+          href="{{ url_for('register_route') }}"
+          class="action-button auth-button"
+          style="
+            background-image: linear-gradient(to right, #28a745 0%, #218838 100%);
+            max-width: 220px;
+          "
+        >
+          Register
+        </a>
+      </div>
+    {% endif %}
   </section>
 </main>
-{% endblock %} {% block page_scripts %}{% endblock %}
+{% endblock %}
+
+{% block page_scripts %}{% endblock %}
