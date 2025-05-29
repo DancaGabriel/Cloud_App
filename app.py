@@ -12,6 +12,16 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+import matplotlib
+matplotlib.use('Agg')   # pentru server/headless rendering
+
+import io
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from scipy.stats import linregress
+
 
 textract_client = boto3.client('textract', region_name='eu-central-1')
 
@@ -581,7 +591,7 @@ import boto3
 from flask import request, jsonify
 from datetime import datetime
 
-textract_client = boto3.client('textract', region_name='eu-west-1')  # Nu uita să setezi regiunea!
+textract_client = boto3.client('textract', region_name='eu-central-1')
 
 @app.route('/verify-student', methods=['GET'])
 @login_required
@@ -614,6 +624,251 @@ def verify_student():
             return jsonify({'status': 'Fail', 'message': 'Not enough student-related elements detected ❌'})
     except Exception as e:
         return jsonify({'status': 'Error', 'message': f'Image processing error: {str(e)}'}), 500
+
+@app.route('/visualization')
+@login_required
+def visualization():
+    today = datetime.now(timezone.utc).date().isoformat()
+    return render_template('visualization.html', max_date=today, year=datetime.now().year)
+
+ALLOWED_CURRENCIES = ['USD','EUR','GBP','RON','JPY','CAD','AUD','CHF']
+
+@app.route('/visualization-image')
+@login_required
+def visualization_image():
+    # 1. Parse and validate parameters
+    base   = request.args.get('base',   '').upper()
+    target = request.args.get('target', '').upper()
+    start  = request.args.get('start')
+    end    = request.args.get('end')
+
+    if not all([base, target, start, end]):
+        abort(400, "Parameters base, target, start și end sunt obligatorii.")
+    if base not in ALLOWED_CURRENCIES or target not in ALLOWED_CURRENCIES:
+        abort(400, "Currency code must be one of: " + ", ".join(ALLOWED_CURRENCIES))
+    if base == target:
+        abort(400, "Base și Target trebuie să fie diferite.")
+
+    # 2. Validate and convert dates
+    try:
+        start_date = datetime.strptime(start, '%Y-%m-%d').date()
+        end_date   = datetime.strptime(end,   '%Y-%m-%d').date()
+    except ValueError:
+        abort(400, "Formatul datelor trebuie să fie YYYY-MM-DD.")
+
+    today = datetime.now(timezone.utc).date()
+    if start_date > end_date:
+        abort(400, "Start date trebuie să fie înainte de End date.")
+    if end_date > today:
+        abort(400, f"End date nu poate fi după {today}.")
+
+    # 3. Obtain a database connection
+    conn = get_db_connection()
+    if not conn:
+        abort(500, "Eroare la conectarea cu baza de date.")
+    cursor = conn.cursor()
+
+    series = []
+    # 4. For each day, extract rate from DB or fetch from API
+    for i in range((end_date - start_date).days + 1):
+        d = start_date + timedelta(days=i)
+
+        cursor.execute("""
+            SELECT rate_value
+              FROM daily_exchange_rates
+             WHERE rate_date = %s
+               AND base_currency_code = %s
+               AND target_currency_code = %s
+        """, (d, base, target))
+        row = cursor.fetchone()
+
+        if row and row[0] is not None:
+            series.append((d, float(row[0])))
+        else:
+            fetched = None
+            # ExchangeRateAPI.com
+            if EXCHANGE_RATE_API_KEY:
+                try:
+                    url = f"https://v6.exchangerate-api.com/v6/{EXCHANGE_RATE_API_KEY}/history/{base}/{d}"
+                    r = requests.get(url, timeout=5); r.raise_for_status()
+                    js = r.json()
+                    if js.get("result") == "success":
+                        rates = js["conversion_rates"]
+                        fetched = rates.get(target)
+                        insert_rates_into_db(base, rates, d, js["time_last_update_utc"], SOURCE_EXCHANGERATE_API)
+                except:
+                    pass
+            # fallback Frankfurter.app
+            if fetched is None:
+                try:
+                    url2 = f"https://api.frankfurter.app/{d}?base={base}&symbols={target}"
+                    r2 = requests.get(url2, timeout=5); r2.raise_for_status()
+                    js2 = r2.json()
+                    rates2 = js2.get("rates", {})
+                    fetched = rates2.get(target)
+                    insert_rates_into_db(base, rates2, d, d.strftime('%a, %d %b %Y %H:%M:%S %z'), SOURCE_FRANKFURTER_APP)
+                except:
+                    pass
+
+            if fetched is not None:
+                series.append((d, fetched))
+
+    cursor.close()
+    conn.close()
+
+    if not series:
+        abort(404, "Nu s-au putut obține date pentru intervalul specificat.")
+
+    # 5. Sort the data
+    series.sort(key=lambda x: x[0])
+    dates  = [pt[0] for pt in series]
+    values = [pt[1] for pt in series]
+
+    # 6. Generate the matplotlib figure
+    fig, ax = plt.subplots(figsize=(8,4))
+    ax.plot(dates, values, marker='o', linewidth=1)
+    ax.set_title(f"{base} → {target} ({start} – {end})")
+    ax.set_xlabel("Data")
+    ax.set_ylabel("Curs")
+    ax.grid(True)
+    fig.autofmt_xdate()
+
+    # 7. Return the image as a response
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight')
+    buf.seek(0)
+    plt.close(fig)
+    return send_file(buf, mimetype='image/png')
+
+@app.route('/forecast')
+@login_required
+def forecast():
+    # 1. Params & validations
+    base   = request.args.get('base', '').upper()
+    target = request.args.get('target', '').upper()
+    ALLOWED = ['USD','EUR','GBP','RON','JPY','CAD','AUD','CHF']
+    if base not in ALLOWED or target not in ALLOWED:
+        abort(400, "Currency code must be one of: " + ", ".join(ALLOWED))
+    if base == target:
+        abort(400, "Base and target must differ.")
+
+    # 2. Last 180 business days (including today)
+    today = datetime.now(timezone.utc).date()
+    bdays = pd.bdate_range(end=today, periods=60).date
+
+    records = []
+    conn = get_db_connection()
+    if not conn:
+        abort(500, "DB connection error")
+    cursor = conn.cursor()
+
+    for d in bdays:
+        rate = None
+
+        # 3a. Try ExchangeRateAPI.com in DB
+        row = cursor.execute("""
+            SELECT rate_value 
+              FROM daily_exchange_rates 
+             WHERE rate_date=%s 
+               AND base_currency_code=%s 
+               AND target_currency_code=%s 
+               AND source_api_name=%s
+        """, (d, base, target, SOURCE_EXCHANGERATE_API))
+        row = cursor.fetchone()
+        if row and row[0] is not None:
+            rate = float(row[0])
+        else:
+            # fetch from ExchangeRateAPI.com if key present
+            if EXCHANGE_RATE_API_KEY:
+                try:
+                    url = f"https://v6.exchangerate-api.com/v6/{EXCHANGE_RATE_API_KEY}/history/{base}/{d}"
+                    r = requests.get(url, timeout=5); r.raise_for_status()
+                    js = r.json()
+                    if js.get("result")=="success":
+                        fetched = js["conversion_rates"].get(target)
+                        if fetched is not None:
+                            rate = fetched
+                            # only insert if we had no DB record
+                            if not row:
+                                insert_rates_into_db(
+                                    base, js["conversion_rates"], d,
+                                    js["time_last_update_utc"], SOURCE_EXCHANGERATE_API
+                                )
+                except:
+                    pass
+
+        # 3b. If still missing, try Frankfurter.app in DB
+        if rate is None:
+            row2 = cursor.execute("""
+                SELECT rate_value 
+                  FROM daily_exchange_rates 
+                 WHERE rate_date=%s 
+                   AND base_currency_code=%s 
+                   AND target_currency_code=%s 
+                   AND source_api_name=%s
+            """, (d, base, target, SOURCE_FRANKFURTER_APP))
+            row2 = cursor.fetchone()
+            if row2 and row2[0] is not None:
+                rate = float(row2[0])
+            else:
+                # fetch from Frankfurter.app
+                try:
+                    url2 = f"https://api.frankfurter.app/{d}?base={base}&symbols={target}"
+                    r2 = requests.get(url2, timeout=5); r2.raise_for_status()
+                    js2 = r2.json()
+                    fetched2 = js2.get("rates", {}).get(target)
+                    if fetched2 is not None:
+                        rate = fetched2
+                        # only insert if no DB record
+                        if not row2:
+                            insert_rates_into_db(
+                                base, js2["rates"], d,
+                                d.strftime('%a, %d %b %Y %H:%M:%S %z'),
+                                SOURCE_FRANKFURTER_APP
+                            )
+                except:
+                    pass
+
+        if rate is not None:
+            records.append((d, rate))
+
+    cursor.close()
+    conn.close()
+
+    if len(records) < 2:
+        abort(500, "Could not retrieve any rates for the past 180 business days.")
+
+    # 4. Build DataFrame & target
+    df = pd.DataFrame(records, columns=['date','close']).set_index('date')
+    df['delta'] = df['close'].shift(-1) - df['close']
+    df['up']    = (df['delta'] > 0).astype(int)
+
+    # 5. Features
+    for lag in [1,2,3,5,7,14]:
+        df[f'lag_{lag}'] = df['close'].shift(lag)
+    df['momentum_7'] = df['close'] - df['close'].shift(7)
+    df['slope_5']    = df['close'].rolling(5).apply(
+        lambda x: linregress(np.arange(len(x)), x).slope, raw=True
+    )
+    df = df.dropna()
+
+    # 6. Prepare X, y, weights
+    X = df.drop(columns=['delta','up'])
+    y = df['up']
+    n = len(X)
+    lam = np.log(2) / 21
+    weights = np.exp(-lam * np.arange(n)[::-1])
+
+    # 7. Train & predict
+    model = LogisticRegression(max_iter=1000)
+    model.fit(X, y, sample_weight=weights)
+    prob_up = model.predict_proba(X.iloc[[-1]])[0,1]
+
+    return jsonify({
+        "base": base,
+        "target": target,
+        "prob_up": round(float(prob_up), 4)
+    })
 
 
 if __name__ == '__main__':
