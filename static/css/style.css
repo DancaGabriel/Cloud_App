@@ -636,7 +636,7 @@ canvas {
   text-align: center;
 }
 
-.verify-student-section input[type="file"] {
+.verify-student-section input[type='file'] {
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
@@ -646,4 +646,6 @@ canvas {
   font-weight: bold;
   color: #333;
 }
-
+.boss {
+  background-color: #007bff;
+}
